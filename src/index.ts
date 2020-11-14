@@ -64,7 +64,7 @@ export default class VarCanvasGrid {
         const tableHeaderCells: BaseCellType[] = this.tableRows[0];
         const tableBodyCells: BaseCellType[] = flatten(this.tableRows.slice(1));
         const scrollBars = this.scrollBars;
-        // this.clearRect();
+        this.clearRect();
         this.rePaintTableHeader(tableHeaderCells);
         this.rePaintTableBody(tableBodyCells);
         this.rePaintScrollBar(scrollBars);

@@ -13,6 +13,7 @@ interface Rect{
     w: number,
     h: number
 }
+type ButtonPosition =  "bottomLeft" | "bottomRight";
 export class BaseBar {
     private ctx!: CanvasRenderingContext2D;
     private repaint:(...arg:any[]) => void;
@@ -24,7 +25,7 @@ export class BaseBar {
         this.init(options)
         this.repaint = options.repaint;
         this.paintScrollBar();
-        this.initScrollEvent();
+        this.initEvent();
     }
 
     public rePaintScrollBar(options: object) {
@@ -74,12 +75,7 @@ export class BaseBar {
     }
 
     private paintLeftbtn(){
-        const btnRect = {
-            x: 0,
-            y: 480,
-            w: 20,
-            h: 20
-        };
+        const btnRect = this.getButtonRect("bottomLeft");
         const {x, y, w, h} = btnRect;
         const {width: cw, height: ch } = this.ctx.canvas;
         const originX = w / 4;
@@ -91,12 +87,7 @@ export class BaseBar {
     }
 
     private paintRightbtn(){
-        const btnRect = {
-            x: 480,
-            y: 480,
-            w: 20,
-            h: 20
-        };
+        const btnRect = this.getButtonRect("bottomRight");
         const {x, y, w, h} = btnRect;
         const {width: cw, height: ch } = this.ctx.canvas;
         const originX = w / 4;
@@ -114,6 +105,29 @@ export class BaseBar {
         this._offsetTop = this._options.offsetTop || 0;
     }
 
+    private getButtonRect(position: ButtonPosition){
+        const {width: cw, height: ch } = this.ctx.canvas;
+        let x = 0;
+        let y = 0;
+        switch (position) {
+            case "bottomLeft":
+                y = ch - 20;
+                break;
+            case "bottomRight":
+                x = cw - 20;
+                y = ch - 20;
+                break;
+            default:
+                break;
+        }
+        return {
+            x,
+            y,
+            w: 20,
+            h: 20
+        }
+    }
+
     private getScrollBarRect(){
         return {
             x: 0 + this._offsetLeft,
@@ -122,19 +136,50 @@ export class BaseBar {
             h: 20
         }
     }
-    private initScrollEvent(){
+    private initEvent(){
         const canvas = this.ctx.canvas;
         const $canvas = $(canvas);
+        $canvas.on("click", (e) => {
+            const leftBtnRect = this.getButtonRect("bottomLeft");
+            const rightBtnRect = this.getButtonRect("bottomRight");
+            const inLeftBtnRect = this.judgeTargetArea(e, leftBtnRect);
+            const inRightBtnRect = this.judgeTargetArea(e, rightBtnRect);
+            if(inLeftBtnRect) {
+                let moveX = this._offsetLeft - 100;
+                if(moveX < 0 + 20*2){
+                    moveX = 20;
+                }
+                this.repaint({
+                    offsetLeft: moveX,
+                    offsetTop: 0
+                })
+            }
+            if(inRightBtnRect){
+                const { w } = this.getScrollBarRect();
+                const cw = this.ctx.canvas.width;
+                const maxX = cw - w 
+                let moveX = this._offsetLeft + 100;
+                if(moveX > maxX - 20*2){
+                    moveX = maxX - 20;
+                }
+                this.repaint({
+                    offsetLeft: moveX,
+                    offsetTop: 0
+                })
+
+            }
+        })
         $canvas.on("mousemove",(e)=>{
-            if(this.judgeTargetArea(e)){
+            const rect = this.getScrollBarRect();
+            if(this.judgeTargetArea(e, rect)){
                 $canvas.css("cursor", "pointer");
             }else{
                 $canvas.css("cursor", "default");
             }
         })
-        $(canvas).on("mousedown", (e)=>{
+        $canvas.on("mousedown", (e)=>{
             const rect = this.getScrollBarRect();
-            if(!this.judgeTargetArea(e)){
+            if(!this.judgeTargetArea(e, rect)){
                 return false;
             }
             const moveScrollBarHandler = (e1: any)=>{
@@ -151,8 +196,8 @@ export class BaseBar {
         })
     }
 
-    private judgeTargetArea(e: MouseEventInit): boolean{
-        const {x, y, w, h} = this.getScrollBarRect();
+    private judgeTargetArea(e: MouseEventInit, rect: Rect): boolean{
+        const {x, y, w, h} = rect;
         const offsetLeft: number = e.clientX;
         const offsetTop: number = e.clientY;
         return ((offsetLeft > x && offsetLeft < x + w) &&

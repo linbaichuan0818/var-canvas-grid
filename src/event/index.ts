@@ -20,11 +20,11 @@ export const moveScrollBarCallBack = (e: JQuery.MouseDownEvent,
     const {x, y, w, h} = rect; 
     const maxX: number = e1.currentTarget.width - w;
     moveX =  e1.clientX - e.clientX + x;
-    if(moveX < 0){
+    if(moveX < 0 + 20*2){
         moveX = 20;
     }
-    if(moveX > maxX){
-        moveX = maxX - 20;
+    if(moveX > maxX - 20*2){
+        moveX = maxX -20;
     }
     if(x < y){
         fn({

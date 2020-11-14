@@ -55,7 +55,8 @@ export class BaseCellType {
     }
 
     public rePaint(options: object){
-        this.clearRect();
+        // -> 待优化
+        // this.clearRect();
         this.reInit(options);
         this.paintContent();
         this.paintText();
