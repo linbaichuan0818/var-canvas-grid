@@ -64,7 +64,7 @@ export default class VarCanvasGrid {
         const tableHeaderCells: BaseCellType[] = this.tableRows[0];
         const tableBodyCells: BaseCellType[] = flatten(this.tableRows.slice(1));
         const scrollBars = this.scrollBars;
-        this.clearRect();
+        // this.clearRect();
         this.rePaintTableHeader(tableHeaderCells);
         this.rePaintTableBody(tableBodyCells);
         this.rePaintScrollBar(scrollBars);
@@ -73,16 +73,18 @@ export default class VarCanvasGrid {
 
     public rePaintTableHeader(tableHeaderCells: BaseCellType[]) {
         if(tableHeaderCells) {
+            const offset = this.getContentOffset();
             tableHeaderCells.forEach(tableHeaderCell => {
-                tableHeaderCell.rePaint(this.cellCommon);
+                tableHeaderCell.rePaint(offset);
             })
         }
     }
 
     public rePaintTableBody(tableBodyCells: BaseCellType[]){
         if(tableBodyCells) {
+            const offset = this.getContentOffset();
             tableBodyCells.forEach(tableBodyCell => {
-                tableBodyCell.rePaint(this.cellCommon);
+                tableBodyCell.rePaint(offset);
             })
         }
     }
@@ -145,8 +147,28 @@ export default class VarCanvasGrid {
     }
 
     private paintScrollBar(){
-        const scrollBar = new BaseBar({ctx: this.ctx, ...this.cellCommon ,repaint: this.repaint.bind(this)});
+        const offset = this.getSrollBarOffset();
+        // offset.offsetTop =  this.cellCommon.offsetTop - 20;
+        const scrollBar = new BaseBar({ctx: this.ctx, ...offset ,repaint: this.repaint.bind(this)});
         this.scrollBars.push(scrollBar);
+    }
+
+    private getSrollBarOffset(): CellCommon{
+        const offset = {
+            offsetLeft: 0,
+            offsetTop: 0
+        };
+        offset.offsetLeft =  this.cellCommon.offsetLeft + 20;
+        return offset
+    }
+    
+    private getContentOffset(): CellCommon{
+        const offset = {
+            offsetLeft: 0,
+            offsetTop: 0
+        };
+        offset.offsetLeft =  this.cellCommon.offsetLeft - 20;
+        return offset
     }
 
     private paintTableHeaderRow(cellOptionsList: ThCellOptions []){

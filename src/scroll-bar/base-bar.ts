@@ -30,7 +30,7 @@ export class BaseBar {
     public rePaintScrollBar(options: object) {
         this.clearRect();
         this.reinit(options);
-        this.paintScrollBar();
+        this.paintScrollBar();   
     }
 
     public reinit(options: object){
@@ -42,15 +42,69 @@ export class BaseBar {
 
     private clearRect() {
         const {x, y, w, h} = this.getScrollBarRect(); // old rect
-        this.ctx.clearRect(x, y, w, h);
+        this.ctx.clearRect(x-2, y-2, w+3, h+3);
     }
 
     private paintScrollBar(){
         const {x, y, w, h} = this.getScrollBarRect();
-        this.ctx.strokeStyle = "#ccc";
-        this.ctx.shadowOffsetX = 10;
-        this.ctx.shadowOffsetY = 20;
-        this.ctx.strokeRect(x, y, w, h);
+        const {width: cw, height: ch } = this.ctx.canvas;
+        this.ctx.save();
+        this.ctx.fillStyle = "#F1F1F1";
+        this.ctx.fillRect(0, ch - h,  cw, h);
+        this.ctx.fillStyle = "#A8A8A8";
+        this.ctx.fillRect(x, y, w, h);
+        this.ctx.restore();
+        this.paintLeftbtn();
+        this.paintRightbtn();
+    }
+
+    private drawTriangle(x1: number, y1: number, 
+                         x2: number, y2: number,
+                         x3: number, y3: number, 
+                         color: string, type: "fill" | "stroke") {
+        const { ctx } = this;
+        const style: "fillStyle" | "strokeStyle"  = (type + 'Style') as any;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx[style] = color;
+        ctx.closePath();
+        ctx[type]();
+    }
+
+    private paintLeftbtn(){
+        const btnRect = {
+            x: 0,
+            y: 480,
+            w: 20,
+            h: 20
+        };
+        const {x, y, w, h} = btnRect;
+        const {width: cw, height: ch } = this.ctx.canvas;
+        const originX = w / 4;
+        const originY = h / 4;
+        this.drawTriangle(x + 20 - originX, y + originY, 
+                          x + 20 - originX, y + h - originY, 
+                          x + originX, y + (ch-y)/2, 
+                          "#A8A8A8", "fill");
+    }
+
+    private paintRightbtn(){
+        const btnRect = {
+            x: 480,
+            y: 480,
+            w: 20,
+            h: 20
+        };
+        const {x, y, w, h} = btnRect;
+        const {width: cw, height: ch } = this.ctx.canvas;
+        const originX = w / 4;
+        const originY = h / 4;
+        this.drawTriangle(x + originX , y + originY, 
+                          x + originX, y + h - originY, 
+                          x + w - originX, y + (ch-y)/2, 
+                          "#A8A8A8", "fill" );
     }
 
     private init(options: BaseBarOptions) {

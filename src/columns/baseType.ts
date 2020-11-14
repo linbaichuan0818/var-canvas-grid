@@ -54,11 +54,11 @@ export class BaseCellType {
         this.initParams(this._options);
     }
 
-    public rePaint(options: object){ 
-        this.reInit(options);
+    public rePaint(options: object){
         this.clearRect();
+        this.reInit(options);
         this.paintContent();
-        this.paintText()
+        this.paintText();
     }
 
     private init(options: BaseCellOptions){
@@ -79,7 +79,8 @@ export class BaseCellType {
 
     private clearRect(){
         const {x, y, w, h, ctx} = this.getCellRect();
-        ctx.clearRect(x, y, w, h);
+        // 单个cell自行清理上一个区域
+        ctx.clearRect(x, y, w + 1, h + 1);
     }
 
     private getCellRect(): BaseCellRect{

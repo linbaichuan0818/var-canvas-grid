@@ -21,16 +21,16 @@ export const moveScrollBarCallBack = (e: JQuery.MouseDownEvent,
     const maxX: number = e1.currentTarget.width - w;
     moveX =  e1.clientX - e.clientX + x;
     if(moveX < 0){
-        moveX = 0;
+        moveX = 20;
     }
     if(moveX > maxX){
-        moveX = maxX;
+        moveX = maxX - 20;
     }
     if(x < y){
-        deBounce(fn.bind(null, {
-                offsetLeft: moveX,
-                offsetTop: 0
-            }),  10)()
+        fn({
+            offsetLeft: moveX,
+            offsetTop: 0
+        })
     }
 };
 
