@@ -53,9 +53,9 @@ export class BaseBar {
         this.ctx.fillRect(0, ch - h,  cw, h);
         this.ctx.fillStyle = "#A8A8A8";
         this.ctx.fillRect(x, y, w, h);
-        this.ctx.restore();
         this.paintLeftbtn();
         this.paintRightbtn();
+        this.ctx.restore();
     }
 
     private drawTriangle(x1: number, y1: number, 
