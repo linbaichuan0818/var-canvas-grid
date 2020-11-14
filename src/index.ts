@@ -110,7 +110,6 @@ export default class VarCanvasGrid {
             .attr("height", String(gridContainerHeigth));
 
         this.ctx = this.$canvas.getContext("2d");
-        this.paintOutline();
     }
 
     private paint() {
@@ -119,6 +118,7 @@ export default class VarCanvasGrid {
         this.paintTableHeader();
         this.paintTableBody();
         this.paintScrollBar();
+        this.paintOutline();
     }
 
     private clearRect(){
