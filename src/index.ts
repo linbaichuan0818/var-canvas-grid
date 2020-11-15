@@ -193,9 +193,10 @@ export default class VarCanvasGrid {
     }
 
     private paintTableBodyRow(data: RowData[]){
+        const headerNames: string[] = this.tableRows[0].map(headerRow => headerRow.name); 
         data.forEach((row, index) => {
            const tableRow: BaseCellType[] = []; 
-           for (const key in row) {
+           for (const key of headerNames) {
                 const extendedCellOptions = this.getBodyCellRect(row, key, index);
                 const cell = new BaseCellType(extendedCellOptions);
                 tableRow.push(cell);
@@ -206,8 +207,8 @@ export default class VarCanvasGrid {
 
     private getBodyCellRect(row: RowData, key: string, index: number){
         let matchRect = this.nameToRectMap[key];
-        let displayName:string = row[key];
-        let name:string = row[key];
+        let displayName:string = row[key] !== undefined? row[key]: "";
+        let name:string = row[key] !== undefined? row[key]: "";
         if(!matchRect) {
             const {x, y, w: width, h: height}=this.tableRows[0][index]; // get last row rect
             matchRect = {x, y, width, height};
