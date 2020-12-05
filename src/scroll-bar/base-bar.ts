@@ -5,6 +5,8 @@ interface BaseBarOptions{
     ctx: CanvasRenderingContext2D;
     offsetTop?: number,
     offsetLeft?: number,
+    xRadio: number,
+    yRadio: number,
     repaint:(...args: any[]) => void;
 }
 interface Rect{
@@ -15,6 +17,7 @@ interface Rect{
 }
 type ButtonPosition =  "bottomLeft" | "bottomRight";
 export class BaseBar {
+    public static BTNWIDTH: number = 20;
     private ctx!: CanvasRenderingContext2D;
     private repaint:(...arg:any[]) => void;
     private _offsetLeft: number = 0;
@@ -80,8 +83,8 @@ export class BaseBar {
         const {width: cw, height: ch } = this.ctx.canvas;
         const originX = w / 4;
         const originY = h / 4;
-        this.drawTriangle(x + 20 - originX, y + originY, 
-                          x + 20 - originX, y + h - originY, 
+        this.drawTriangle(x + BaseBar.BTNWIDTH - originX, y + originY, 
+                          x + BaseBar.BTNWIDTH - originX, y + h - originY, 
                           x + originX, y + (ch-y)/2, 
                           "#A8A8A8", "fill");
     }
@@ -111,11 +114,11 @@ export class BaseBar {
         let y = 0;
         switch (position) {
             case "bottomLeft":
-                y = ch - 20;
+                y = ch - BaseBar.BTNWIDTH;
                 break;
             case "bottomRight":
-                x = cw - 20;
-                y = ch - 20;
+                x = cw - BaseBar.BTNWIDTH;
+                y = ch - BaseBar.BTNWIDTH;
                 break;
             default:
                 break;
@@ -123,17 +126,21 @@ export class BaseBar {
         return {
             x,
             y,
-            w: 20,
-            h: 20
+            w: BaseBar.BTNWIDTH,
+            h: BaseBar.BTNWIDTH
         }
     }
 
     private getScrollBarRect(){
+        const cw = this.ctx.canvas.width;
+        const ch = this.ctx.canvas.height;
+        const xRadio = this._options.xRadio;
+        // const yRadio = this._options.yRadio;
         return {
-            x: 0 + this._offsetLeft,
-            y: 480 + this._offsetTop,
-            w: 100,
-            h: 20
+            x: this._offsetLeft,
+            y: this._offsetTop,
+            w: (cw - BaseBar.BTNWIDTH*2) *xRadio,
+            h: BaseBar.BTNWIDTH
         }
     }
     private initEvent(){
@@ -145,9 +152,9 @@ export class BaseBar {
             const inLeftBtnRect = this.judgeTargetArea(e, leftBtnRect);
             const inRightBtnRect = this.judgeTargetArea(e, rightBtnRect);
             if(inLeftBtnRect) {
-                let moveX = this._offsetLeft - 100;
-                if(moveX < 0 + 20*2){
-                    moveX = 20;
+                let moveX = this._offsetLeft - 100; // stepLen
+                if(moveX < 0 + BaseBar.BTNWIDTH*2){
+                    moveX = BaseBar.BTNWIDTH;
                 }
                 this.repaint({
                     offsetLeft: moveX,
@@ -159,8 +166,8 @@ export class BaseBar {
                 const cw = this.ctx.canvas.width;
                 const maxX = cw - w 
                 let moveX = this._offsetLeft + 100;
-                if(moveX > maxX - 20*2){
-                    moveX = maxX - 20;
+                if(moveX > maxX - BaseBar.BTNWIDTH*2){
+                    moveX = maxX - BaseBar.BTNWIDTH;
                 }
                 this.repaint({
                     offsetLeft: moveX,

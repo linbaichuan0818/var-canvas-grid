@@ -41,3 +41,10 @@ export function throttle(fn: ()=>void, interval: number) {
               }, interval)
     }
   }
+  /**
+   * 求和
+   * @param {Array<number>} nums
+   */
+export function sum(nums: number[]){
+    return nums.reduce((pre, cur) => pre + cur, 0);
+}
