@@ -1,5 +1,8 @@
 import { BaseCellType } from "./columns/index";
 import { BaseBar } from "./scroll-bar/base-bar";
+import { ScrollBarX } from "./scroll-bar/scroll-bar-x";
+import { ScrollBarY } from "./scroll-bar/scroll-bar-y";
+
 import $ from 'jquery';
 import { flatten, sum } from "./helper/index";
 interface ThCellOptions {
@@ -69,7 +72,7 @@ export default class VarCanvasGrid {
     }
 
     public repaint(options: CellCommon){
-        this.cellCommon = options;
+        this.cellCommon = Object.assign(this.cellCommon, options);
         const tableHeaderCells: BaseCellType[] = this.tableRows[0];
         const tableBodyCells: BaseCellType[] = flatten(this.tableRows.slice(1));
         const scrollBars = this.scrollBars;
@@ -99,9 +102,14 @@ export default class VarCanvasGrid {
     }
 
     public rePaintScrollBar(scrollBars: BaseBar[]){
-        const { offsetLeft } = this.cellCommon;
+        const { offsetLeft, offsetTop } = this.cellCommon;
+        const isScrollBarX = (scrollBar: BaseBar) => scrollBar instanceof ScrollBarX;
         scrollBars.forEach(scrollBar => {
-            scrollBar.rePaintScrollBar({ offsetLeft })
+            if(isScrollBarX(scrollBar)){
+                scrollBar.rePaintScrollBar({ offsetLeft })
+            }else{
+                scrollBar.rePaintScrollBar({ offsetTop })
+            }
         });
     }
 
@@ -164,8 +172,8 @@ export default class VarCanvasGrid {
         this.tableRows = [];
         this.nameToRectMap = {};
         this.cellCommon = {
-            offsetLeft: options.offsetLeft || 0,
-            offsetTop: options.offsetTop || 0,
+            offsetLeft: options.offsetLeft || BaseBar.BTNWIDTH,
+            offsetTop: options.offsetTop || BaseBar.BTNWIDTH,
         }
         this.data = options.data;
         this._rowHeight = options.rowHeight ? options.rowHeight: DEFAULTROWHEIGHT;
@@ -182,14 +190,26 @@ export default class VarCanvasGrid {
     private paintScrollBar(){
         const gridInfo = this.computeGridInfo();
         const { xRadio, yRadio} = gridInfo;
-        const offset = this.getSrollBarOffset("x", gridInfo);
         // offset.offsetTop =  this.cellCommon.offsetTop - BaseBar.BTNWIDTH;
-        const scrollBar = new BaseBar({ctx: this.ctx, 
-                                       ...offset,
-                                       xRadio,
-                                       yRadio,
-                                       repaint: this.repaint.bind(this)});
-        this.scrollBars.push(scrollBar);
+        if(xRadio < 1) {
+            const offset = this.getSrollBarOffset("x", gridInfo);
+            const scrollBar = new ScrollBarX({ctx: this.ctx, 
+                                              ...offset,
+                                              xRadio,
+                                              yRadio,
+                                              repaint: this.repaint.bind(this)});
+            this.scrollBars.push(scrollBar);
+        }
+
+        if(yRadio < 1) {
+            const offset = this.getSrollBarOffset("y", gridInfo);
+            const scrollBar = new ScrollBarY({ctx: this.ctx, 
+                                              ...offset,
+                                              xRadio,
+                                              yRadio,
+                                              repaint: this.repaint.bind(this)});
+            this.scrollBars.push(scrollBar);
+        }
     }
 
     private getSrollBarOffset(
@@ -202,10 +222,10 @@ export default class VarCanvasGrid {
             offsetTop: 0
         };
         offset.offsetLeft = scrollDirection === "x" ?
-        offsetLeft + BaseBar.BTNWIDTH : 
+        offsetLeft: 
         gridInfo.cw - BaseBar.BTNWIDTH;
         offset.offsetTop = scrollDirection === "y" ?
-        offsetTop + BaseBar.BTNWIDTH :
+        offsetTop:
         gridInfo.ch - BaseBar.BTNWIDTH;
         return offset
     }
@@ -215,9 +235,10 @@ export default class VarCanvasGrid {
             offsetLeft: 0,
             offsetTop: 0
         };
-        const { xRadio, w, cw } = this.computeGridInfo();
-        const { offsetLeft } = this.cellCommon;
+        const { xRadio, yRadio, w, h, cw, ch } = this.computeGridInfo();
+        const { offsetLeft, offsetTop } = this.cellCommon;
         offset.offsetLeft =  ((offsetLeft - BaseBar.BTNWIDTH) /((cw - BaseBar.BTNWIDTH *2) * (1 - xRadio))) * (w - cw);
+        offset.offsetTop =  ((offsetTop - BaseBar.BTNWIDTH) /((ch - BaseBar.BTNWIDTH *2) * (1 - yRadio))) * (h - ch);
         return offset
     }
 
