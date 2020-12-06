@@ -30,13 +30,15 @@ export class ScrollBarX extends BaseBar{
             cw - safeArea,
             h
         );
-        ctx.fillStyle = "#DCDCDC";
-        ctx.fillRect(
-            cw - safeArea, 
-            ch - h,
-            BaseBar.BTNWIDTH,
-            BaseBar.BTNWIDTH
-        );
+        if(safeArea){
+            ctx.fillStyle = "#DCDCDC";
+            ctx.fillRect(
+                cw - safeArea, 
+                ch - h,
+                BaseBar.BTNWIDTH,
+                BaseBar.BTNWIDTH
+            );
+        }
         ctx.fillStyle = "#A8A8A8";
         ctx.fillRect(x, y, w, h);
         this.paintLeftbtn();
