@@ -145,16 +145,16 @@ export default class VarCanvasGrid {
         let clientWidth: number = cw;
         let clientHeight: number = ch;
         const w = sum(this.tableRows[0].map(headerCol => headerCol.w));
-        const h = sum(this.tableRows.map(bodyRow => bodyRow[0].h)) + BaseBar.BTNWIDTH * 3;
-        if(w > cw) { // - scrollBarXHeight
-            clientHeight -= BaseBar.BTNWIDTH; 
-        }
-        if(h > ch) {
-            clientWidth -= BaseBar.BTNWIDTH; 
-        }
+        const h = sum(this.tableRows.map(bodyRow => bodyRow[0].h));
+        // if(w > cw) { // - scrollBarXHeight
+        //     clientHeight -= BaseBar.BTNWIDTH; 
+        // }
+        // if(h > ch) {
+        //     clientWidth -= BaseBar.BTNWIDTH; 
+        // }
         return {
-            xRadio: Number((clientWidth / w).toFixed(1)),
-            yRadio: Number((clientHeight / h).toFixed(1)),
+            xRadio: Number((clientWidth / w).toFixed(2)),
+            yRadio: Number((clientHeight / h).toFixed(2)),
             w,
             h,
             cw,
@@ -236,8 +236,12 @@ export default class VarCanvasGrid {
         };
         const { xRadio, yRadio, w, h, cw, ch } = this.computeGridInfo();
         const { offsetLeft, offsetTop } = this.cellCommon;
-        offset.offsetLeft =  ((offsetLeft - BaseBar.BTNWIDTH) /((cw - BaseBar.BTNWIDTH *2) * (1 - xRadio))) * (w - cw);
-        offset.offsetTop =  ((offsetTop - BaseBar.BTNWIDTH) /((ch - BaseBar.BTNWIDTH *2) * (1 - yRadio))) * (h - ch);
+        const isDouble =  xRadio < 1 && yRadio < 1;
+        const bw = BaseBar.BTNWIDTH
+        offset.offsetLeft =  ((offsetLeft - bw) /
+        ((cw - bw *(isDouble? 3 : 2)) * (1 - xRadio))) * (w + bw*(isDouble? 2 : 1) - cw);
+        offset.offsetTop =  ((offsetTop - bw) /
+        ((ch - bw *(isDouble? 3 : 2)) * (1 - yRadio))) * (h + bw*(isDouble? 2 : 1) - ch);
         return offset
     }
 
@@ -254,7 +258,9 @@ export default class VarCanvasGrid {
                                                       {index, ctx: this.ctx, 
                                                        height: this._headerRowHeight,
                                                        offsetLeft,
-                                                       offsetTop
+                                                       offsetTop,
+                                                       row: 0,
+                                                       col: index
                                                       }, 
                                                       nextCellOptions);
             const cell = new BaseCellType(extendedCellOptions);
@@ -269,18 +275,18 @@ export default class VarCanvasGrid {
 
     private paintTableBodyRow(data: RowData[]){
         const headerNames: string[] = this.tableRows[0].map(headerRow => headerRow.name); 
-        data.forEach((row, index) => {
+        data.forEach((row, rowIndex) => {
            const tableRow: BaseCellType[] = []; 
-           for (const key of headerNames) {
-                const extendedCellOptions = this.getBodyCellRect(row, key, index);
-                const cell = new BaseCellType(extendedCellOptions);
-                tableRow.push(cell);
-           };
+           headerNames.forEach( (key, colIndex) => {
+            const extendedCellOptions = this.getBodyCellRect(row, key, rowIndex, colIndex);
+            const cell = new BaseCellType(extendedCellOptions);
+            tableRow.push(cell);
+           })
            this.tableRows.push(tableRow);
         })
     }
 
-    private getBodyCellRect(row: RowData, key: string, index: number){
+    private getBodyCellRect(row: RowData, key: string, rowIndex: number, colIndex: number){
         let matchRect = this.nameToRectMap[key];
         let displayName:string = row[key] !== undefined? row[key]: "";
         let name:string = row[key] !== undefined? row[key]: "";
@@ -288,17 +294,19 @@ export default class VarCanvasGrid {
         offsetLeft -= BaseBar.BTNWIDTH;
         offsetTop -= BaseBar.BTNWIDTH;
         if(!matchRect) {
-            const {x, y, w: width, h: height}=this.tableRows[0][index]; // get last row rect
+            const {x, y, w: width, h: height}=this.tableRows[0][rowIndex]; // get last row rect
             matchRect = {x, y, width, height};
             name = displayName = "";
         }
         matchRect.y = this.currentY;
         matchRect.height = this._rowHeight;
         return Object.assign({displayName, name}, 
-                             {index, 
+                             {index: rowIndex, 
                               ctx: this.ctx,
                               offsetLeft,
                               offsetTop,
+                              row: rowIndex + 1, // header——> 1
+                              col: colIndex,
                               ...matchRect});
     }
 

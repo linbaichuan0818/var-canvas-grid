@@ -16,7 +16,9 @@ interface BaseCellOptions extends DefaultOptions{
     height: number;
     ctx: CanvasRenderingContext2D;
     displayName:string,
-    name:string
+    name:string,
+    row: number,
+    col: number
 }
 interface BaseCellRect{
     x: number;
@@ -40,6 +42,8 @@ export class BaseCellType {
     public h: number = 0;
     public displayName: string = "";
     public name: string = "";
+    public row!: number;
+    public col!: number;
     private _offsetLeft: number = 0;
     private _offsetTop: number = 0;
     private _options: BaseCellOptions;
@@ -76,6 +80,8 @@ export class BaseCellType {
         this.name  = this._options.name;
         this._offsetLeft = this._options.offsetLeft || 0;
         this._offsetTop = this._options.offsetTop || 0;
+        this.row = this._options.row;
+        this.col = this._options.col;
     }
 
     private clearRect(){
@@ -122,8 +128,9 @@ export class BaseCellType {
     private paintContent(){
         const { x, y, w, h, ctx} = this.getCellRect();
         const { lineWidth: lw, bgColor: bgc, borderColor: bdgc} = this._options;
+        ctx.beginPath();
         ctx.strokeStyle = bdgc;
         ctx.lineWidth = lw;
-        ctx.strokeRect(x + 0.5, y + 0.5, w, h);
+        ctx.strokeRect(x - 0.5, y , w, h);
     }
 }
