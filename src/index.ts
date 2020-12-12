@@ -30,8 +30,8 @@ interface GridInfo{
 }
 
 interface CellCommon{
-    offsetLeft: number;
-    offsetTop: number;
+    offsetLeft?: number;
+    offsetTop?: number;
 }
 
 interface GridOption {
@@ -77,17 +77,24 @@ export default class VarCanvasGrid {
         const tableBodyCells: BaseCellType[] = flatten(this.tableRows.slice(1));
         const scrollBars = this.scrollBars;
         this.clearRect();
-        this.rePaintTableHeader(tableHeaderCells);
         this.rePaintTableBody(tableBodyCells);
+        this.rePaintTableHeader(tableHeaderCells);
         this.rePaintScrollBar(scrollBars);
         this.paintOutline();
     }
 
     public rePaintTableHeader(tableHeaderCells: BaseCellType[]) {
         if(tableHeaderCells) {
-            const offset = this.getContentOffset();
+            let offset = this.getContentOffset();
+            offset = {
+                offsetLeft: offset.offsetLeft,
+                offsetTop: 0
+            };
+            this.ctx.clearRect(0,0,this.ctx.canvas.width, this._headerRowHeight);
             tableHeaderCells.forEach(tableHeaderCell => {
-                tableHeaderCell.rePaint(offset);
+                tableHeaderCell.rePaint(
+                        offset
+                    );
             })
         }
     }
@@ -142,19 +149,11 @@ export default class VarCanvasGrid {
     private computeGridInfo(): GridInfo{
         const cw = this.ctx.canvas.width;
         const ch = this.ctx.canvas.height;
-        let clientWidth: number = cw;
-        let clientHeight: number = ch;
         const w = sum(this.tableRows[0].map(headerCol => headerCol.w));
         const h = sum(this.tableRows.map(bodyRow => bodyRow[0].h));
-        // if(w > cw) { // - scrollBarXHeight
-        //     clientHeight -= BaseBar.BTNWIDTH; 
-        // }
-        // if(h > ch) {
-        //     clientWidth -= BaseBar.BTNWIDTH; 
-        // }
         return {
-            xRadio: Number((clientWidth / w).toFixed(2)),
-            yRadio: Number((clientHeight / h).toFixed(2)),
+            xRadio: Number((cw / w).toFixed(1)),
+            yRadio: Number((ch / h).toFixed(1)),
             w,
             h,
             cw,

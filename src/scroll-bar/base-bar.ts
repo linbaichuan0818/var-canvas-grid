@@ -21,6 +21,7 @@ export abstract class BaseBar {
   public abstract EVENTMAP: {
     moveScrollBarCallBack: (...args: any[]) => any;
     scrollBarOnclickCallBack: (...args: any[]) => any;
+    onMousewheel?: (...args: any[]) => any;
   };
   public ctx!: CanvasRenderingContext2D;
   private repaint: (...arg: any[]) => void;
@@ -140,13 +141,26 @@ export abstract class BaseBar {
         this.repaint
       );
     });
+    $canvas.on('mousewheel DOMMouseScroll', (e: any)=>{
+      e.preventDefault();
+      const wheel = e.originalEvent.wheelDelta || -e.originalEvent.detail;
+      const delta = Math.max(-1, Math.min(1, wheel) );
+      const onMousewheelHandelr= this.EVENTMAP.onMousewheel? this.EVENTMAP.onMousewheel: () => false;
+      
+      onMousewheelHandelr(
+        this._offsetTop - delta * 10, 
+        this.getScrollBarRect(),
+        this.repaint,
+        e
+        )
+    });
     $canvas.on("mousemove", (e) => {
-      const rect = this.getScrollBarRect();
-      if (this.judgeTargetArea(e, rect)) {
-        $canvas.css("cursor", "pointer");
-      } else {
-        $canvas.css("cursor", "default");
-      }
+      // const rect = this.getScrollBarRect();
+      // if (this.judgeTargetArea(e, rect)) {
+      //   $canvas.css("cursor", "pointer");
+      // } else {
+      //   $canvas.css("cursor", "default");
+      // }
     });
     $canvas.on("mousedown", (e: any) => {
       const rect = this.getScrollBarRect();

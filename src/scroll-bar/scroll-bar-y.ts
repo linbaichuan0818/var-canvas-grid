@@ -2,12 +2,14 @@ import { BaseBar, BaseBarOptions } from "./base-bar";
 import {
   moveScrollBarYCallBack,
   scrollBarYOnClickCallBack,
+  onMousewheelY
 } from "../event/index";
 
 export class ScrollBarY extends BaseBar {
   public EVENTMAP: {
     moveScrollBarCallBack: (...args: any[]) => any;
     scrollBarOnclickCallBack: (...args: any[]) => any;
+    onMousewheel?: (...args: any[]) => any;
   } = {
     moveScrollBarCallBack: () => false,
     scrollBarOnclickCallBack: () => false,
@@ -16,6 +18,7 @@ export class ScrollBarY extends BaseBar {
     super(options);
     this.EVENTMAP.moveScrollBarCallBack = moveScrollBarYCallBack;
     this.EVENTMAP.scrollBarOnclickCallBack = scrollBarYOnClickCallBack;
+    this.EVENTMAP.onMousewheel = onMousewheelY;
   }
 
   public paintScrollBar() {
@@ -36,6 +39,7 @@ export class ScrollBarY extends BaseBar {
     this.paintBottomtbtn();
     ctx.restore();
   }
+
   private paintTopbtn() {
     const btnRect = this.getButtonRect("topRight");
     const { x, y, w, h } = btnRect;

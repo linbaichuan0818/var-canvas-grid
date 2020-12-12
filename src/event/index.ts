@@ -41,6 +41,24 @@ export const moveScrollBarXCallBack = (
   });
 };
 
+export const onMousewheelY = (
+    moveY: number, 
+    rect: Rect,
+    fn: (...arg: any[]) => any,
+    e: any
+  ) =>{
+    const {width} = e.currentTarget;
+    const {w, h} = rect;
+    if(moveY < w ) {
+      moveY =  w ;
+    };
+    if(moveY > width - 2*w - h) {
+      moveY =  width - 2*w - h;
+    }
+    fn({
+      offsetTop: moveY,
+    });
+}
 export const moveScrollBarYCallBack = (
   e: JQuery.MouseDownEvent,
   rect: Rect,
