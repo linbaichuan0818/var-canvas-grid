@@ -45,15 +45,17 @@ export const onMousewheelY = (
     moveY: number, 
     rect: Rect,
     fn: (...arg: any[]) => any,
+    isDouble: boolean,
     e: any
   ) =>{
-    const {width} = e.currentTarget;
+    const {height} = e.currentTarget;
     const {w, h} = rect;
+    const restBtnNum = isDouble? 2: 1;
     if(moveY < w ) {
       moveY =  w ;
     };
-    if(moveY > width - 2*w - h) {
-      moveY =  width - 2*w - h;
+    if(moveY > height - restBtnNum*w - h) {
+      moveY =  height - restBtnNum*w - h;
     }
     fn({
       offsetTop: moveY,
@@ -88,41 +90,40 @@ export const scrollBarXOnClickCallBack = (
   e: JQuery.ClickEvent,
   inLeftBtnRect: boolean,
   inRightBtnRect: boolean,
-  inRightBottomRect: boolean,
-  inLeftRect: boolean,
   options: BaseBarOptions,
   rect: Rect,
   fn: (...arg: any[]) => any
 ) => {
   const { offsetLeft, ctx, xRadio, yRadio } = options;
   const isDouble = xRadio < 1 && yRadio < 1;
+  const { w } = rect;
+  let { offsetX: moveX} = e;
+  if(moveX >= offsetLeft && moveX <= offsetLeft + w) return false;
+  if(moveX > offsetLeft){
+    moveX -= w;
+  }
   if (inLeftBtnRect) {
-    let moveX = offsetLeft - 100; // stepLen
+    moveX = offsetLeft - 100; // stepLen
     if (moveX < 0 + BaseBar.BTNWIDTH * 2) {
       moveX = BaseBar.BTNWIDTH;
     }
-    fn({
-      offsetLeft: moveX,
-    });
+
   }
   if (inRightBtnRect) {
-    const { w } = rect;
     const cw = ctx.canvas.width;
     const maxX = cw - w;
-    let moveX = offsetLeft + 100;
+    moveX = offsetLeft + 100;
     if (moveX > maxX - BaseBar.BTNWIDTH * 2) {
       moveX = maxX - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
     }
-    fn({
-      offsetLeft: moveX,
-    });
   }
+  fn({
+    offsetLeft: moveX,
+  });
 };
 
 export const scrollBarYOnClickCallBack = (
   e: JQuery.ClickEvent,
-  inLeftBtnRect: boolean,
-  inRightBtnRect: boolean,
   inRightBottomRect: boolean,
   inTopRightRect: boolean,
   options: BaseBarOptions,
@@ -131,27 +132,29 @@ export const scrollBarYOnClickCallBack = (
 ) => {
   const { offsetTop, ctx, xRadio, yRadio } = options;
   const isDouble = xRadio < 1 && yRadio < 1;
+  const { h } = rect;
+  let { offsetY: moveY} = e;
+  if(moveY >= offsetTop && moveY <= offsetTop + h) return false;
+  if(moveY > offsetTop) {
+    moveY -= h;
+  }
   if (inTopRightRect) {
-    let moveY = offsetTop - 100; // stepLen
+    moveY = offsetTop - 100; // stepLen
     if (moveY < 0 + BaseBar.BTNWIDTH * 2) {
       moveY = BaseBar.BTNWIDTH;
     }
-    fn({
-      offsetTop: moveY,
-    });
   }
   if (inRightBottomRect) {
-    const { h } = rect;
     const ch = ctx.canvas.height;
     const maxY = ch - h;
-    let moveY = offsetTop + 100;
+    moveY = offsetTop + 100;
     if (moveY > maxY - BaseBar.BTNWIDTH * 2) {
       moveY = maxY - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
     }
-    fn({
-      offsetTop: moveY,
-    });
   }
+  fn({
+    offsetTop: moveY,
+  });
 };
 
 export const leaveScrollBarCallBack = (

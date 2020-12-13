@@ -7,15 +7,15 @@ import {
 export class ScrollBarX extends BaseBar {
   public EVENTMAP: {
     moveScrollBarCallBack: (...args: any[]) => any;
-    scrollBarOnclickCallBack: (...args: any[]) => any;
+    scrollBarXOnclickCallBack: (...args: any[]) => any;
   } = {
     moveScrollBarCallBack: () => false,
-    scrollBarOnclickCallBack: () => false,
+    scrollBarXOnclickCallBack: () => false,
   };
   constructor(options: BaseBarOptions) {
     super(options);
     this.EVENTMAP.moveScrollBarCallBack = moveScrollBarXCallBack;
-    this.EVENTMAP.scrollBarOnclickCallBack = scrollBarXOnClickCallBack;
+    this.EVENTMAP.scrollBarXOnclickCallBack = scrollBarXOnClickCallBack;
   }
 
   public paintScrollBar() {

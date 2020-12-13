@@ -8,16 +8,16 @@ import {
 export class ScrollBarY extends BaseBar {
   public EVENTMAP: {
     moveScrollBarCallBack: (...args: any[]) => any;
-    scrollBarOnclickCallBack: (...args: any[]) => any;
+    scrollBarYOnclickCallBack: (...args: any[]) => any;
     onMousewheel?: (...args: any[]) => any;
   } = {
     moveScrollBarCallBack: () => false,
-    scrollBarOnclickCallBack: () => false,
+    scrollBarYOnclickCallBack: () => false,
   };
   constructor(options: BaseBarOptions) {
     super(options);
     this.EVENTMAP.moveScrollBarCallBack = moveScrollBarYCallBack;
-    this.EVENTMAP.scrollBarOnclickCallBack = scrollBarYOnClickCallBack;
+    this.EVENTMAP.scrollBarYOnclickCallBack = scrollBarYOnClickCallBack;
     this.EVENTMAP.onMousewheel = onMousewheelY;
   }
 

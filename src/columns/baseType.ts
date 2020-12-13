@@ -117,6 +117,7 @@ export class BaseCellType {
     // only center
     private getAlignPos(cellRect: BaseCellRect, fontSize: number){
         const {x, y, w, h, ctx} = cellRect;
+        ctx.font = '12px sans-serif';
         const textWidth = ctx.measureText(this.displayName).width;
         return {
             x: x + 0.5*(w - textWidth),

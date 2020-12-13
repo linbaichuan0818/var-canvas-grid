@@ -20,7 +20,8 @@ export abstract class BaseBar {
   public static BTNWIDTH: number = 20;
   public abstract EVENTMAP: {
     moveScrollBarCallBack: (...args: any[]) => any;
-    scrollBarOnclickCallBack: (...args: any[]) => any;
+    scrollBarXOnclickCallBack?: (...args: any[]) => any;
+    scrollBarYOnclickCallBack?: (...args: any[]) => any;
     onMousewheel?: (...args: any[]) => any;
   };
   public ctx!: CanvasRenderingContext2D;
@@ -120,37 +121,54 @@ export abstract class BaseBar {
   // common event
   private initEvent() {
     const canvas = this.ctx.canvas;
+    const {width, height} = canvas;
+    const safeAreaSize = Number(this.isDouble) * BaseBar.BTNWIDTH;
     const $canvas = $(canvas);
-    $canvas.on("click", (e) => {
-      const leftBtnRect = this.getButtonRect("bottomLeft");
-      const rightBtnRect = this.getButtonRect("bottomRight");
-      const rightBottomBtnRect = this.getButtonRect("rightBottom");
-      const topRightBtnRect = this.getButtonRect("topRight");
-      const inLeftBtnRect = this.judgeTargetArea(e, leftBtnRect);
-      const inRightBtnRect = this.judgeTargetArea(e, rightBtnRect);
-      const inRightBottomRect = this.judgeTargetArea(e, rightBottomBtnRect);
-      const inTopRightRect = this.judgeTargetArea(e, topRightBtnRect);
-      this.EVENTMAP.scrollBarOnclickCallBack(
-        e,
-        inLeftBtnRect,
-        inRightBtnRect,
-        inRightBottomRect,
-        inTopRightRect,
-        this._options,
-        this.getScrollBarRect(),
-        this.repaint
-      );
+    $canvas.bind("click", (e: any) => {
+      const { offsetX, offsetY } = e;
+      if(offsetY > height - BaseBar.BTNWIDTH 
+        && offsetX < width - safeAreaSize) {
+        const leftBtnRect = this.getButtonRect("bottomLeft");
+        const rightBtnRect = this.getButtonRect("bottomRight");
+        const inLeftBtnRect = this.judgeTargetArea(e, leftBtnRect);
+        const inRightBtnRect = this.judgeTargetArea(e, rightBtnRect);
+        this.EVENTMAP.scrollBarXOnclickCallBack?
+        this.EVENTMAP.scrollBarXOnclickCallBack(
+          e,
+          inLeftBtnRect,
+          inRightBtnRect,
+          this._options,
+          this.getScrollBarRect(),
+          this.repaint
+        ) : null;
+      }
+      if(offsetX > width - BaseBar.BTNWIDTH 
+        && offsetY < height - safeAreaSize) {
+          const rightBottomBtnRect = this.getButtonRect("rightBottom");
+          const topRightBtnRect = this.getButtonRect("topRight");
+          const inRightBottomRect = this.judgeTargetArea(e, rightBottomBtnRect);
+          const inTopRightRect = this.judgeTargetArea(e, topRightBtnRect);
+          this.EVENTMAP.scrollBarYOnclickCallBack?
+          this.EVENTMAP.scrollBarYOnclickCallBack(
+            e,
+            inRightBottomRect,
+            inTopRightRect,
+            this._options,
+            this.getScrollBarRect(),
+            this.repaint
+          ): null;
+      }
     });
     $canvas.on('mousewheel DOMMouseScroll', (e: any)=>{
       e.preventDefault();
       const wheel = e.originalEvent.wheelDelta || -e.originalEvent.detail;
       const delta = Math.max(-1, Math.min(1, wheel) );
       const onMousewheelHandelr= this.EVENTMAP.onMousewheel? this.EVENTMAP.onMousewheel: () => false;
-      
       onMousewheelHandelr(
         this._offsetTop - delta * 10, 
         this.getScrollBarRect(),
         this.repaint,
+        this.isDouble,
         e
         )
     });
