@@ -157,7 +157,7 @@ export const scrollBarYOnClickCallBack = (
     return false;
   }
 
-  moveY = (moveY - Number(isBack) * barH - BaseBar.BTNWIDTH) *  contentH / (ch - BaseBar.BTNWIDTH * noScrollAreaNum) ;
+  moveY = (moveY - Number(isBack) * barH - BaseBar.BTNWIDTH) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum) ;
   
   // click button
   if (inTopRightRect) {

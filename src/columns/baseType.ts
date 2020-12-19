@@ -1,3 +1,4 @@
+import { BaseBar } from "../scroll-bar/base-bar";
 
 interface DefaultOptions{
     bgColor?: string;
@@ -18,7 +19,9 @@ interface BaseCellOptions extends DefaultOptions{
     displayName:string,
     name:string,
     row: number,
-    col: number
+    col: number,
+    rowCount: number,
+    colCount: number
 }
 interface BaseCellRect{
     x: number;
@@ -53,7 +56,7 @@ export class BaseCellType {
         this.paint();
     }
 
-    public reInit(options: object){
+    public reInit(options: any){
         this._options = Object.assign({}, this._options, options);
         this.initParams(this._options);
     }
@@ -128,10 +131,16 @@ export class BaseCellType {
 
     private paintContent(){
         const { x, y, w, h, ctx} = this.getCellRect();
-        const { lineWidth: lw, bgColor: bgc, borderColor: bdgc} = this._options;
+        const { lineWidth: lw, bgColor: bgc, borderColor: bdgc, col, colCount} = this._options;
         ctx.beginPath();
+        ctx.lineWidth = lw / 2;
         ctx.strokeStyle = bdgc;
-        ctx.lineWidth = lw;
-        ctx.strokeRect(x - 0.5, y , w, h);
+        ctx.moveTo(x,y);
+        ctx.lineTo(x, y + h);
+        ctx.lineTo(x + w, y + h);
+        if(!((col + 1) % colCount)) {
+            ctx.lineTo(x + w, y);
+        }
+        ctx.stroke();
     }
 }

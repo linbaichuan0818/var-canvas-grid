@@ -62,6 +62,8 @@ export default class VarCanvasGrid {
     private cellCommon: CellCommon;
     private stepLengthY!: number;
     private stepLengthX!: number;
+    private colCount: number;
+    private rowCount: number;
 
     constructor(options: GridOption) {
         this.init(options);
@@ -71,6 +73,8 @@ export default class VarCanvasGrid {
     public reinit(){
         this.tableRows = [];
         this.nameToRectMap = {};
+        this.colCount = this._options.thCellOptionsList.length;
+        this.rowCount = this._options.data.length;
     }
 
     public repaint(options: CellCommon){
@@ -125,7 +129,6 @@ export default class VarCanvasGrid {
     }
     private initStepLen(){
         // 步长待优化
-        const {w,h, ch, cw, xRadio, yRadio} = this.computeGridInfo();
         this.stepLengthY = this._rowHeight;
         this.stepLengthX = Math.min.apply(null, this._options.thCellOptionsList.map(i => i.width));
     }
@@ -160,11 +163,17 @@ export default class VarCanvasGrid {
     private computeGridInfo(): GridInfo{
         const cw = this.ctx.canvas.width;
         const ch = this.ctx.canvas.height;
-        const w = sum(this.tableRows[0].map(headerCol => headerCol.w));
-        const h = sum(this.tableRows.map(bodyRow => bodyRow[0].h));
+        let w = sum(this.tableRows[0].map(headerCol => headerCol.w));
+        let h = sum(this.tableRows.map(bodyRow => bodyRow[0].h)); 
+        const xRadio =  cw / w;
+        const yRadio = ch / h;
+        const isDouble = xRadio < 1 && yRadio <1;
+        // show area hidden by scrollBar
+        h += (isDouble? 2: 1)*BaseBar.BTNWIDTH;
+        w += (isDouble? 3: 2)*BaseBar.BTNWIDTH;
         return {
-            xRadio: cw / w < 0.1? 0.1 : Number((cw / w).toFixed(1)),
-            yRadio: ch / h < 0.1? 0.1 : Number((ch / h).toFixed(1)),
+            xRadio,
+            yRadio,
             w,
             h,
             cw,
@@ -175,7 +184,7 @@ export default class VarCanvasGrid {
     private clearRect(){
         const canvasWidth = this.ctx.canvas.width;
         const canvasHeight = this.ctx.canvas.height;
-        this.ctx.clearRect(1, 0.5, canvasWidth - 1.5, canvasHeight - 1.5);
+        this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     }
 
     private init(options: GridOption){
@@ -189,6 +198,8 @@ export default class VarCanvasGrid {
         this._rowHeight = options.rowHeight ? options.rowHeight: DEFAULTROWHEIGHT;
         this._headerRowHeight = options.headerRowHeight ? options.headerRowHeight: DEFAULTHEADERROWHEIGHT;
         this._options = options;
+        this.colCount = this._options.thCellOptionsList.length;
+        this.rowCount = this._options.data.length;
     }
 
     private paintOutline(){
@@ -228,10 +239,7 @@ export default class VarCanvasGrid {
             offsetLeft: 0,
             offsetTop: 0
         };
-        const { xRadio, yRadio, w, h, cw, ch } = this.computeGridInfo();
         const { offsetLeft, offsetTop } = this.cellCommon;
-        const isDouble =  xRadio < 1 && yRadio < 1;
-        const bw = BaseBar.BTNWIDTH
         offset.offsetLeft =  offsetLeft;
         offset.offsetTop =  offsetTop;
         return offset
@@ -240,7 +248,7 @@ export default class VarCanvasGrid {
     private paintTableHeaderRow(cellOptionsList: ThCellOptions []){
         const nextCellOptions: {x: number, y: number} = {x:0, y:0};
         const tableRow: BaseCellType[] = [];
-        let {offsetLeft, offsetTop} = this.cellCommon;
+        const {offsetLeft, offsetTop} = this.cellCommon;
 
         cellOptionsList.forEach((cellOptions, index) => {
             const extendedCellOptions = Object.assign({}, 
@@ -249,6 +257,8 @@ export default class VarCanvasGrid {
                                                        height: this._headerRowHeight,
                                                        offsetLeft,
                                                        offsetTop,
+                                                       colCount :this.colCount,
+                                                       rowCount: this.rowCount, 
                                                        row: 0,
                                                        col: index
                                                       }, 
@@ -283,7 +293,7 @@ export default class VarCanvasGrid {
         let matchRect = this.nameToRectMap[key];
         let displayName:string = row[key] !== undefined? row[key]: "";
         let name:string = row[key] !== undefined? row[key]: "";
-        let {offsetLeft, offsetTop} = this.cellCommon;
+        const {offsetLeft, offsetTop} = this.cellCommon;
         if(!matchRect) {
             const {x, y, w: width, h: height}=this.tableRows[0][rowIndex]; // get last row rect
             matchRect = {x, y, width, height};
@@ -298,6 +308,8 @@ export default class VarCanvasGrid {
                 ctx: this.ctx,
                 offsetLeft,
                 offsetTop,
+                colCount :this.colCount,
+                rowCount: this.rowCount, 
                 row: rowIndex + 1, // header——> 1
                 col: colIndex,
                 ...matchRect
