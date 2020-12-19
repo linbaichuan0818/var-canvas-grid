@@ -111,9 +111,10 @@ export default class VarCanvasGrid {
     }
 
     public rePaintScrollBar(scrollBars: BaseBar[]){
-        const { offsetLeft, offsetTop } = this.cellCommon;
+        const gridInfo = this.computeGridInfo();
         const isScrollBarX = (scrollBar: BaseBar) => scrollBar instanceof ScrollBarX;
         // this.initStepLen();
+        const {offsetLeft, offsetTop} = this.cellCommon
         scrollBars.forEach(scrollBar => {
             if(isScrollBarX(scrollBar)){
                 scrollBar.rePaintScrollBar({ offsetLeft })
@@ -125,8 +126,8 @@ export default class VarCanvasGrid {
     private initStepLen(){
         // 步长待优化
         const {w,h, ch, cw, xRadio, yRadio} = this.computeGridInfo();
-        this.stepLengthY = ((this._rowHeight + 0.5)/ h) * ((ch - BaseBar.BTNWIDTH * 3) * (1-yRadio));
-        this.stepLengthX = ( 60 -2.5)/ w *(cw - BaseBar.BTNWIDTH*2);
+        this.stepLengthY = this._rowHeight;
+        this.stepLengthX = Math.min.apply(null, this._options.thCellOptionsList.map(i => i.width));
     }
 
     private createCanvas(gridId: string, style: string) {
@@ -181,8 +182,8 @@ export default class VarCanvasGrid {
         this.tableRows = [];
         this.nameToRectMap = {};
         this.cellCommon = {
-            offsetLeft: options.offsetLeft || BaseBar.BTNWIDTH,
-            offsetTop: options.offsetTop || BaseBar.BTNWIDTH,
+            offsetLeft: options.offsetLeft || 0,
+            offsetTop: options.offsetTop || 0,
         }
         this.data = options.data;
         this._rowHeight = options.rowHeight ? options.rowHeight: DEFAULTROWHEIGHT;
@@ -200,11 +201,10 @@ export default class VarCanvasGrid {
         const gridInfo = this.computeGridInfo();
         const { xRadio, yRadio} = gridInfo;
         if(xRadio < 1) {
-            const offset = this.getSrollBarOffset("x", gridInfo);
             const scrollBar = new ScrollBarX({ctx: this.ctx, 
-                                              ...offset,
-                                              xRadio,
-                                              yRadio,
+                                              ...this.cellCommon,
+                                              ...gridInfo,
+                                              type:'x',
                                               stepLengthY: this.stepLengthY,
                                               stepLengthX: this.stepLengthX,
                                               repaint: this.repaint.bind(this)});
@@ -212,34 +212,15 @@ export default class VarCanvasGrid {
         }
 
         if(yRadio < 1) {
-            const offset = this.getSrollBarOffset("y", gridInfo);
             const scrollBar = new ScrollBarY({ctx: this.ctx, 
-                                              ...offset,
-                                              xRadio,
-                                              yRadio,
+                                              ...this.cellCommon,
+                                              ...gridInfo,
+                                              type:'y',
                                               stepLengthY: this.stepLengthY,
                                               stepLengthX: this.stepLengthX,
                                               repaint: this.repaint.bind(this)});
             this.scrollBars.push(scrollBar);
         }
-    }
-
-    private getSrollBarOffset(
-        scrollDirection: "x" | "y", 
-        gridInfo: GridInfo
-    ): CellCommon{
-        const { offsetLeft, offsetTop } = this.cellCommon;
-        const offset = {
-            offsetLeft: 0,
-            offsetTop: 0
-        };
-        offset.offsetLeft = scrollDirection === "x" ?
-        offsetLeft: 
-        gridInfo.cw - BaseBar.BTNWIDTH;
-        offset.offsetTop = scrollDirection === "y" ?
-        offsetTop:
-        gridInfo.ch - BaseBar.BTNWIDTH;
-        return offset
     }
     
     private getContentOffset(): CellCommon{
@@ -251,10 +232,8 @@ export default class VarCanvasGrid {
         const { offsetLeft, offsetTop } = this.cellCommon;
         const isDouble =  xRadio < 1 && yRadio < 1;
         const bw = BaseBar.BTNWIDTH
-        offset.offsetLeft =  ((offsetLeft - bw) /
-        ((cw - bw *(isDouble? 3 : 2)) * (1 - xRadio))) * (w + bw*(isDouble? 2 : 1) - cw);
-        offset.offsetTop =  ((offsetTop - bw) /
-        ((ch - bw *(isDouble? 3 : 2)) * (1 - yRadio))) * (h + bw*(isDouble? 2 : 1) - ch);
+        offset.offsetLeft =  offsetLeft;
+        offset.offsetTop =  offsetTop;
         return offset
     }
 
@@ -262,8 +241,6 @@ export default class VarCanvasGrid {
         const nextCellOptions: {x: number, y: number} = {x:0, y:0};
         const tableRow: BaseCellType[] = [];
         let {offsetLeft, offsetTop} = this.cellCommon;
-        offsetLeft -= BaseBar.BTNWIDTH;
-        offsetTop -= BaseBar.BTNWIDTH;
 
         cellOptionsList.forEach((cellOptions, index) => {
             const extendedCellOptions = Object.assign({}, 
@@ -307,8 +284,6 @@ export default class VarCanvasGrid {
         let displayName:string = row[key] !== undefined? row[key]: "";
         let name:string = row[key] !== undefined? row[key]: "";
         let {offsetLeft, offsetTop} = this.cellCommon;
-        offsetLeft -= BaseBar.BTNWIDTH;
-        offsetTop -= BaseBar.BTNWIDTH;
         if(!matchRect) {
             const {x, y, w: width, h: height}=this.tableRows[0][rowIndex]; // get last row rect
             matchRect = {x, y, width, height};

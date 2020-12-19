@@ -19,70 +19,71 @@ export const removeEvent = (
 export const moveScrollBarXCallBack = (
   e: JQuery.MouseDownEvent,
   rect: Rect,
-  isDouble: boolean,
+  options: BaseBarOptions,
   fn: (...arg: any[]) => any,
   e1: JQuery.MouseOverEvent
 ) => {
-  const { x, y, w, h } = rect;
-  const cw = e.currentTarget.width;
-  const ch = e.currentTarget.height;
-  let moveX: number = 0;
-  const maxX: number = cw - w;
-  const noSCrollAreaLen: number = isDouble ? 2 : 1;
-  moveX = e1.clientX - e.clientX + x;
-  if (moveX < BaseBar.BTNWIDTH * noSCrollAreaLen) {
-    moveX = BaseBar.BTNWIDTH;
+  const { 
+    xRadio, 
+    yRadio,
+    w: contentW,
+    cw
+  } = options;
+  const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
+  const {x: barOffsetLeft } = rect;
+  let moveX = (e1.clientX - e.clientX + barOffsetLeft) *  contentW / (cw - BaseBar.BTNWIDTH *noScrollAreaNum);
+  if (moveX < 0 ) {
+    moveX = 0;
   }
-  if (moveX > maxX - BaseBar.BTNWIDTH * noSCrollAreaLen) {
-    moveX = maxX - BaseBar.BTNWIDTH * noSCrollAreaLen;
+  if (moveX > (1- xRadio) * contentW) {
+    moveX = (1- xRadio) * contentW;
   }
   fn({
-    offsetLeft: moveX,
+    offsetLeft: moveX
   });
 };
 
 export const onMousewheelY = (
     moveY: number, 
-    rect: Rect,
+    options: BaseBarOptions,
     fn: (...arg: any[]) => any,
-    isDouble: boolean,
     e: any
-  ) =>{
-    const {height} = e.currentTarget;
-    const {w, h} = rect;
-    const restBtnNum = isDouble? 2: 1;
-    if(moveY < w ) {
-      moveY =  w ;
+  ) => {
+    const {h: contentH, yRadio} = options;
+    if(moveY < 0 ) {
+       moveY =  0 ;
     };
-    if(moveY > height - restBtnNum*w - h) {
-      moveY =  height - restBtnNum*w - h;
+    if (moveY > (1- yRadio) * contentH) {
+      moveY = (1- yRadio) * contentH;
     }
     fn({
-      offsetTop: moveY,
+      offsetTop: moveY
     });
 }
 export const moveScrollBarYCallBack = (
   e: JQuery.MouseDownEvent,
   rect: Rect,
-  isDouble: boolean,
+  options: BaseBarOptions,
   fn: (...arg: any[]) => any,
   e1: JQuery.MouseOverEvent
 ) => {
-  const { x, y, w, h } = rect;
-  const cw = e.currentTarget.width;
-  const ch = e.currentTarget.height;
-  let moveY: number = 0;
-  const maxY: number = ch - h;
-  const noSCrollAreaLen: number = isDouble ? 2 : 1;
-  moveY = e1.clientY - e.clientY + y;
-  if (moveY < BaseBar.BTNWIDTH * noSCrollAreaLen) {
-    moveY = BaseBar.BTNWIDTH;
+  const { 
+    yRadio, 
+    xRadio,
+    h: contentH,
+    ch
+  } = options;
+  const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
+  const {y: barOffsetTop } = rect;
+  let moveY = (e1.clientY - e.clientY + barOffsetTop) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum);
+  if (moveY < 0 ) {
+    moveY = 0;
   }
-  if (moveY > maxY - BaseBar.BTNWIDTH * noSCrollAreaLen) {
-    moveY = maxY - BaseBar.BTNWIDTH * noSCrollAreaLen;
+  if (moveY > (1- yRadio) * contentH) {
+    moveY = (1- yRadio) * contentH;
   }
   fn({
-    offsetTop: moveY,
+    offsetTop: moveY
   });
 };
 
@@ -94,29 +95,35 @@ export const scrollBarXOnClickCallBack = (
   rect: Rect,
   fn: (...arg: any[]) => any
 ) => {
-  const { offsetLeft, ctx, xRadio, yRadio, stepLengthX } = options;
-  const isDouble = xRadio < 1 && yRadio < 1;
-  const { w } = rect;
+  const { 
+    offsetLeft, 
+    xRadio, 
+    yRadio, 
+    stepLengthX, 
+    w: contentW, cw
+  } = options;
+  const { w: barW, x: barOffsetLeft } = rect;
   let { offsetX: moveX} = e;
-  if(moveX >= offsetLeft && moveX <= offsetLeft + w) {
+  const isBack = moveX > barOffsetLeft;
+  const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
+  // click gray area
+  if(moveX >= barOffsetLeft && moveX <= barOffsetLeft + barW) {
     return false;
   }
-  if(moveX > offsetLeft){
-    moveX -= w;
-  }
-  if (inLeftBtnRect) {
-    moveX = offsetLeft - stepLengthX; // stepLen
-    if (moveX < 0 + BaseBar.BTNWIDTH * 2) {
-      moveX = BaseBar.BTNWIDTH;
-    }
 
+  moveX = (moveX - Number(isBack)*barW - BaseBar.BTNWIDTH) *  contentW / (cw - BaseBar.BTNWIDTH * noScrollAreaNum) ;
+
+  // click button
+  if (inLeftBtnRect) {
+    moveX = offsetLeft - stepLengthX; // step length
+    if (moveX < 0 ) {
+      moveX = 0;
+    }
   }
   if (inRightBtnRect) {
-    const cw = ctx.canvas.width;
-    const maxX = cw - w;
     moveX = offsetLeft + stepLengthX;
-    if (moveX > maxX - BaseBar.BTNWIDTH * 2) {
-      moveX = maxX - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
+    if (moveX > (1- xRadio) * contentW) {
+      moveX = (1- xRadio) * contentW;
     }
   }
   fn({
@@ -132,32 +139,41 @@ export const scrollBarYOnClickCallBack = (
   rect: Rect,
   fn: (...arg: any[]) => any
 ) => {
-  const { offsetTop, ctx, xRadio, yRadio, stepLengthY } = options;
-  const isDouble = xRadio < 1 && yRadio < 1;
-  const { h } = rect;
+  const { 
+    offsetTop, 
+    yRadio, 
+    xRadio,
+    stepLengthY, 
+    h: contentH, 
+    ch
+  } = options;
+  const { h: barH, y: barOffsetTop } = rect;
   let { offsetY: moveY} = e;
-  if(moveY >= offsetTop && moveY <= offsetTop + h) {
+  const isBack = moveY > barOffsetTop;
+  const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
+  
+  // click gray area
+  if(moveY >= barOffsetTop && moveY <= barOffsetTop + barH) {
     return false;
   }
-  if(moveY > offsetTop) {
-    moveY -= h;
-  }
+
+  moveY = (moveY - Number(isBack) * barH - BaseBar.BTNWIDTH) *  contentH / (ch - BaseBar.BTNWIDTH * noScrollAreaNum) ;
+  
+  // click button
   if (inTopRightRect) {
-    moveY = offsetTop - stepLengthY; // stepLen
-    if (moveY < 0 + BaseBar.BTNWIDTH * 2) {
-      moveY = BaseBar.BTNWIDTH;
+    moveY = offsetTop - stepLengthY; // step length
+    if (moveY < 0 ) {
+      moveY = 0;
     }
   }
   if (inRightBottomRect) {
-    const ch = ctx.canvas.height;
-    const maxY = ch - h;
     moveY = offsetTop + stepLengthY;
-    if (moveY > maxY - BaseBar.BTNWIDTH * 2) {
-      moveY = maxY - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
+    if (moveY > (1- yRadio) * contentH) {
+      moveY = (1- yRadio) * contentH;
     }
   }
   fn({
-    offsetTop: moveY,
+    offsetTop: moveY
   });
 };
 

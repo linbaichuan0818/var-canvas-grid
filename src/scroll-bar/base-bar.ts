@@ -1,12 +1,18 @@
 import $ from "jquery";
 import { deBounce, throttle } from "../helper/index";
 import { upScrollBarCallBack, leaveScrollBarCallBack } from "../event/index";
+import { ScrollBarX } from "./scroll-bar-x";
 export interface BaseBarOptions {
   ctx: CanvasRenderingContext2D;
   offsetTop?: number;
   offsetLeft?: number;
   xRadio: number;
   yRadio: number;
+  type: 'x' | 'y';
+  ch: number,
+  h: number,
+  cw: number,
+  w: number,
   stepLengthY: number;
   stepLengthX: number;
   repaint: (...args: any[]) => void;
@@ -46,11 +52,11 @@ export abstract class BaseBar {
     const ch = this.ctx.canvas.height;
     const xRadio = this._options.xRadio;
     const yRadio = this._options.yRadio;
-    const isX: boolean = this._offsetLeft < cw - 20;
+    const isX: boolean =  this._options.type === 'x';
     const noSCrollAreaLen: number = this.isDouble ? 3 : 2;
     return {
-      x: this._offsetLeft,
-      y: this._offsetTop,
+      x: isX ? this._offsetLeft + BaseBar.BTNWIDTH: this._offsetLeft,
+      y: isX ? this._offsetTop: this._offsetTop + BaseBar.BTNWIDTH,
       w: isX
         ? (cw - BaseBar.BTNWIDTH * noSCrollAreaLen) * xRadio
         : BaseBar.BTNWIDTH,
@@ -97,10 +103,17 @@ export abstract class BaseBar {
   }
 
   public reinit(options: object) {
+    const {offsetTop: oldOffsetTop} = this._options;
     this._options = Object.assign({}, this._options, options);
-    this.ctx = this._options.ctx;
-    this._offsetLeft = this._options.offsetLeft || 0;
-    this._offsetTop = this._options.offsetTop || 0;
+    const {ctx, ch, offsetTop} = this._options;
+    this.ctx = ctx;
+    const scrollDirection = this._options.type;
+    const {
+      offsetLeft: _offsetLeft, 
+      offsetTop:_offsetTop
+    } = this.getSrollBarOffset(scrollDirection);
+    this._offsetLeft = _offsetLeft || 0;
+    this._offsetTop = _offsetTop || 0;
   }
 
   public get isDouble() {
@@ -115,9 +128,15 @@ export abstract class BaseBar {
 
   private init(options: BaseBarOptions) {
     this._options = options;
-    this.ctx = this._options.ctx;
-    this._offsetLeft = this._options.offsetLeft || 0;
-    this._offsetTop = this._options.offsetTop || 0;
+    const {ctx, ch, offsetTop} = options;
+    this.ctx = ctx;
+    const scrollDirection =   this._options.type;
+    const {
+      offsetLeft: _offsetLeft, 
+      offsetTop:_offsetTop
+    } = this.getSrollBarOffset(scrollDirection);
+    this._offsetLeft = _offsetLeft || 0;
+    this._offsetTop = _offsetTop || 0;
   }
 
   // common event
@@ -169,10 +188,9 @@ export abstract class BaseBar {
       const delta = Math.max(-1, Math.min(1, wheel) );
       const onMousewheelHandelr= this.EVENTMAP.onMousewheel? this.EVENTMAP.onMousewheel: () => false;
       onMousewheelHandelr(
-        this._offsetTop - delta * this._options.stepLengthY, 
-        this.getScrollBarRect(),
+        this._options.offsetTop - delta * this._options.stepLengthY, 
+        this._options,
         this.repaint,
-        this.isDouble,
         e
         )
     });
@@ -193,7 +211,7 @@ export abstract class BaseBar {
         ? this.EVENTMAP.moveScrollBarCallBack
         : () => false;
       const moveScrollBarHandler = (e1: any) => {
-        moveScrollBarCallBack(e, rect, this.isDouble, this.repaint, e1);
+        moveScrollBarCallBack(e, rect, this._options, this.repaint, e1);
       };
 
       $canvas.on("mousemove", moveScrollBarHandler);
@@ -205,7 +223,22 @@ export abstract class BaseBar {
       });
     });
   }
-
+  private getSrollBarOffset(
+    scrollDirection: "x" | "y", 
+) {
+    const { offsetLeft, offsetTop, cw, ch, h, w } = this._options;
+    const offset = {
+        offsetLeft: 0,
+        offsetTop: 0
+    };
+    offset.offsetLeft = scrollDirection === "x" ?
+    offsetLeft / w * (cw -BaseBar.BTNWIDTH *3): 
+    cw - BaseBar.BTNWIDTH;
+    offset.offsetTop = scrollDirection === "y" ?
+    offsetTop / h * (ch -BaseBar.BTNWIDTH * 3):
+    ch - BaseBar.BTNWIDTH;
+    return offset
+}
   private judgeTargetArea(e: JQuery.MouseOverEvent, rect: Rect): boolean {
     const { x, y, w, h } = rect;
     const offsetLeft: number = e.offsetX;
