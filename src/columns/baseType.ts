@@ -133,8 +133,8 @@ export class BaseCellType {
         const { x, y, w, h, ctx} = this.getCellRect();
         const { lineWidth: lw, bgColor: bgc, borderColor: bdgc, col, colCount} = this._options;
         ctx.beginPath();
-        ctx.lineWidth = lw / 2;
-        ctx.strokeStyle = bdgc;
+        ctx.lineWidth = lw / 6;
+        ctx.strokeStyle = '#000';
         ctx.moveTo(x,y);
         ctx.lineTo(x, y + h);
         ctx.lineTo(x + w, y + h);

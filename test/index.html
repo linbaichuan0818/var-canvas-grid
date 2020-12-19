@@ -30,28 +30,33 @@
                             { 
                                 width: 60, 
                                 height: 50, 
-                                name:"text1",
-                                displayName:"text1",
+                                name:"no13",
+                                displayName:"No."
                             },
                             { 
-                                width: 320, 
+                                width: 60, 
                                 height: 50, 
                                 name:"text2",
-                                displayName:"text2",
+                                displayName:"text0"
+                            }, { 
+                                width: 60, 
+                                height: 50, 
+                                name:"n12321",
+                                displayName:"No."
                             },
                             { 
-                                width: 320, 
+                                width: 605, 
                                 height: 50, 
                                 name:"text3",
-                                displayName:"text2",
-                            }
+                                displayName:"text0"
+                            },
                        ],
                        data:[{
                            no: 0,
                            text0:"11",
                            text1:"11",
                            text2:"11",
-                        //    text3:"11",
+                           text3:"11",
                        },{
                            no: 1,
                            text0:"111",
@@ -66,9 +71,9 @@
                            text3:"11",
                        },{
                            no: 2,
-                           text0:"1111",
+                           text0:"131",
                            text1:"1111",
-                           text2:"1111",
+                           text2:"我感觉不怎么样啊啊啊啊啊啊啊",
                            text3:"11",
                        },{
                            no: 2,
@@ -180,6 +185,14 @@
                            text3:"131",
                        }]
                     }
-    const grid = new VarCanvasGrid(gridOpts);
+        gridOpts.data = new Array(100).fill(0);
+        gridOpts.data.forEach((item ,index) =>  gridOpts.data[index] = {
+                           no: index,
+                           text0:"23131",
+                           text1:"21321",
+                           text2:"1231",
+                           text3:"131",
+                       });
+   const grid = new VarCanvasGrid(gridOpts);
 </script>
 </html>
