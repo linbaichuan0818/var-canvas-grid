@@ -50,10 +50,9 @@ export abstract class BaseBar {
   public getScrollBarRect() {
     let { xRadio, yRadio} = this._options;
     const {cw ,ch} = this._options;
-    xRadio = xRadio < 0.05 ? 0.05 : xRadio;
-    yRadio = yRadio < 0.05 ? 0.05 : yRadio;
-    const isX: boolean =  this._options.type === 'x';
     const noSCrollAreaLen: number = this.isDouble ? 3 : 2;
+
+    const isX: boolean =  this._options.type === 'x';
     return {
       x: isX ? this._offsetLeft + BaseBar.BTNWIDTH: this._offsetLeft,
       y: isX ? this._offsetTop: this._offsetTop + BaseBar.BTNWIDTH,
@@ -136,7 +135,7 @@ export abstract class BaseBar {
       offsetTop:_offsetTop
     } = this.getSrollBarOffset(scrollDirection);
     this._offsetLeft = _offsetLeft || 0;
-    this._offsetTop = _offsetTop || 0;
+    this._offsetTop = _offsetTop || 0; 
   }
 
   // common event
@@ -225,36 +224,22 @@ export abstract class BaseBar {
   }
   private getSrollBarOffset(
     scrollDirection: "x" | "y", 
-) {
-    const { offsetLeft, offsetTop, cw, ch, h, w, yRadio, xRadio } = this._options;
-    const offset = {
-        offsetLeft: 0,
-        offsetTop: 0
-    };
-    
-    const noScrollNum = yRadio < 1 && xRadio < 1? 3: 2;
-    offset.offsetLeft = scrollDirection === "x" ?
-    offsetLeft / w * (cw - BaseBar.BTNWIDTH * noScrollNum): 
-    cw - BaseBar.BTNWIDTH;
-    offset.offsetTop = scrollDirection === "y" ?
-    offsetTop / h * (ch - BaseBar.BTNWIDTH * noScrollNum):
-    ch - BaseBar.BTNWIDTH;
-    if(
-      yRadio < 0.05 && 
-      offset.offsetTop > BaseBar.BTNWIDTH &&
-      scrollDirection === "y"
-      ) {
-      offset.offsetTop -= BaseBar.BTNWIDTH 
-    }
-    if(
-      xRadio < 0.05 
-      && offset.offsetLeft > BaseBar.BTNWIDTH
-      && scrollDirection === "x"
-      ) {
-      offset.offsetLeft -= BaseBar.BTNWIDTH 
-    }
-    return offset
-}
+  ) {
+      const { offsetLeft, offsetTop, cw, ch, h, w, yRadio, xRadio } = this._options;
+      const offset = {
+          offsetLeft: 0,
+          offsetTop: 0
+      };
+      
+      const noScrollNum = yRadio < 1 && xRadio < 1? 3: 2;
+      offset.offsetLeft = scrollDirection === "x" ?
+      offsetLeft / w * (cw - BaseBar.BTNWIDTH * noScrollNum): 
+      cw - BaseBar.BTNWIDTH;
+      offset.offsetTop = scrollDirection === "y" ?
+      offsetTop / h * (ch - BaseBar.BTNWIDTH * noScrollNum):
+      ch - BaseBar.BTNWIDTH;
+      return offset
+  }
   private judgeTargetArea(e: JQuery.MouseOverEvent, rect: Rect): boolean {
     const { x, y, w, h } = rect;
     const offsetLeft: number = e.offsetX;

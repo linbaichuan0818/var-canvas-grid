@@ -165,12 +165,13 @@ export default class VarCanvasGrid {
         const ch = this.ctx.canvas.height;
         let w = sum(this.tableRows[0].map(headerCol => headerCol.w));
         let h = sum(this.tableRows.map(bodyRow => bodyRow[0].h)); 
+        const restAreaNum = (cw / w < 1) &&  (ch / h < 1) ? 2 : 1;
+        // show area hidden by scrollBar
+        h += restAreaNum * BaseBar.BTNWIDTH;
+        w += restAreaNum * BaseBar.BTNWIDTH;
         const xRadio =  cw / w;
         const yRadio = ch / h;
-        const isDouble = xRadio < 1 && yRadio <1;
-        // show area hidden by scrollBar
-        h += (isDouble? 2: 1)*BaseBar.BTNWIDTH;
-        w += (isDouble? 3: 2)*BaseBar.BTNWIDTH;
+
         return {
             xRadio,
             yRadio,
