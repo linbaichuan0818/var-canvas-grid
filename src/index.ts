@@ -60,6 +60,8 @@ export default class VarCanvasGrid {
     private _headerRowHeight: number;
     private _options!:GridOption;
     private cellCommon: CellCommon;
+    private stepLengthY!: number;
+    private stepLengthX!: number;
 
     constructor(options: GridOption) {
         this.init(options);
@@ -111,6 +113,7 @@ export default class VarCanvasGrid {
     public rePaintScrollBar(scrollBars: BaseBar[]){
         const { offsetLeft, offsetTop } = this.cellCommon;
         const isScrollBarX = (scrollBar: BaseBar) => scrollBar instanceof ScrollBarX;
+        // this.initStepLen();
         scrollBars.forEach(scrollBar => {
             if(isScrollBarX(scrollBar)){
                 scrollBar.rePaintScrollBar({ offsetLeft })
@@ -118,6 +121,12 @@ export default class VarCanvasGrid {
                 scrollBar.rePaintScrollBar({ offsetTop })
             }
         });
+    }
+    private initStepLen(){
+        // 步长待优化
+        const {w,h, ch, cw, xRadio, yRadio} = this.computeGridInfo();
+        this.stepLengthY = ((this._rowHeight + 0.5)/ h) * ((ch - BaseBar.BTNWIDTH * 3) * (1-yRadio));
+        this.stepLengthX = ( 60 -2.5)/ w *(cw - BaseBar.BTNWIDTH*2);
     }
 
     private createCanvas(gridId: string, style: string) {
@@ -142,6 +151,7 @@ export default class VarCanvasGrid {
         this.createCanvas(gridId, style);
         this.paintTableHeader();
         this.paintTableBody();
+        this.initStepLen();
         this.paintScrollBar();
         this.paintOutline();
     }
@@ -152,8 +162,8 @@ export default class VarCanvasGrid {
         const w = sum(this.tableRows[0].map(headerCol => headerCol.w));
         const h = sum(this.tableRows.map(bodyRow => bodyRow[0].h));
         return {
-            xRadio: Number((cw / w).toFixed(1)),
-            yRadio: Number((ch / h).toFixed(1)),
+            xRadio: cw / w < 0.1? 0.1 : Number((cw / w).toFixed(1)),
+            yRadio: ch / h < 0.1? 0.1 : Number((ch / h).toFixed(1)),
             w,
             h,
             cw,
@@ -195,6 +205,8 @@ export default class VarCanvasGrid {
                                               ...offset,
                                               xRadio,
                                               yRadio,
+                                              stepLengthY: this.stepLengthY,
+                                              stepLengthX: this.stepLengthX,
                                               repaint: this.repaint.bind(this)});
             this.scrollBars.push(scrollBar);
         }
@@ -205,6 +217,8 @@ export default class VarCanvasGrid {
                                               ...offset,
                                               xRadio,
                                               yRadio,
+                                              stepLengthY: this.stepLengthY,
+                                              stepLengthX: this.stepLengthX,
                                               repaint: this.repaint.bind(this)});
             this.scrollBars.push(scrollBar);
         }
@@ -274,6 +288,8 @@ export default class VarCanvasGrid {
 
     private paintTableBodyRow(data: RowData[]){
         const headerNames: string[] = this.tableRows[0].map(headerRow => headerRow.name); 
+        console.time("耗时->待优化")
+        // 耗时点-> 循环两次，循环内调用方法，new多次对象。
         data.forEach((row, rowIndex) => {
            const tableRow: BaseCellType[] = []; 
            headerNames.forEach( (key, colIndex) => {
@@ -283,6 +299,7 @@ export default class VarCanvasGrid {
            })
            this.tableRows.push(tableRow);
         })
+        console.timeEnd("耗时->待优化")
     }
 
     private getBodyCellRect(row: RowData, key: string, rowIndex: number, colIndex: number){
@@ -299,14 +316,17 @@ export default class VarCanvasGrid {
         }
         matchRect.y = this.currentY;
         matchRect.height = this._rowHeight;
-        return Object.assign({displayName, name}, 
-                             {index: rowIndex, 
-                              ctx: this.ctx,
-                              offsetLeft,
-                              offsetTop,
-                              row: rowIndex + 1, // header——> 1
-                              col: colIndex,
-                              ...matchRect});
+        return {
+                displayName,
+                name,
+                index: rowIndex, 
+                ctx: this.ctx,
+                offsetLeft,
+                offsetTop,
+                row: rowIndex + 1, // header——> 1
+                col: colIndex,
+                ...matchRect
+            };
     }
 
     private get currentY(){

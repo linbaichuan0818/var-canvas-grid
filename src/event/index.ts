@@ -94,16 +94,18 @@ export const scrollBarXOnClickCallBack = (
   rect: Rect,
   fn: (...arg: any[]) => any
 ) => {
-  const { offsetLeft, ctx, xRadio, yRadio } = options;
+  const { offsetLeft, ctx, xRadio, yRadio, stepLengthX } = options;
   const isDouble = xRadio < 1 && yRadio < 1;
   const { w } = rect;
   let { offsetX: moveX} = e;
-  if(moveX >= offsetLeft && moveX <= offsetLeft + w) return false;
+  if(moveX >= offsetLeft && moveX <= offsetLeft + w) {
+    return false;
+  }
   if(moveX > offsetLeft){
     moveX -= w;
   }
   if (inLeftBtnRect) {
-    moveX = offsetLeft - 100; // stepLen
+    moveX = offsetLeft - stepLengthX; // stepLen
     if (moveX < 0 + BaseBar.BTNWIDTH * 2) {
       moveX = BaseBar.BTNWIDTH;
     }
@@ -112,7 +114,7 @@ export const scrollBarXOnClickCallBack = (
   if (inRightBtnRect) {
     const cw = ctx.canvas.width;
     const maxX = cw - w;
-    moveX = offsetLeft + 100;
+    moveX = offsetLeft + stepLengthX;
     if (moveX > maxX - BaseBar.BTNWIDTH * 2) {
       moveX = maxX - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
     }
@@ -130,16 +132,18 @@ export const scrollBarYOnClickCallBack = (
   rect: Rect,
   fn: (...arg: any[]) => any
 ) => {
-  const { offsetTop, ctx, xRadio, yRadio } = options;
+  const { offsetTop, ctx, xRadio, yRadio, stepLengthY } = options;
   const isDouble = xRadio < 1 && yRadio < 1;
   const { h } = rect;
   let { offsetY: moveY} = e;
-  if(moveY >= offsetTop && moveY <= offsetTop + h) return false;
+  if(moveY >= offsetTop && moveY <= offsetTop + h) {
+    return false;
+  }
   if(moveY > offsetTop) {
     moveY -= h;
   }
   if (inTopRightRect) {
-    moveY = offsetTop - 100; // stepLen
+    moveY = offsetTop - stepLengthY; // stepLen
     if (moveY < 0 + BaseBar.BTNWIDTH * 2) {
       moveY = BaseBar.BTNWIDTH;
     }
@@ -147,7 +151,7 @@ export const scrollBarYOnClickCallBack = (
   if (inRightBottomRect) {
     const ch = ctx.canvas.height;
     const maxY = ch - h;
-    moveY = offsetTop + 100;
+    moveY = offsetTop + stepLengthY;
     if (moveY > maxY - BaseBar.BTNWIDTH * 2) {
       moveY = maxY - BaseBar.BTNWIDTH * (isDouble ? 2 : 1);
     }

@@ -7,6 +7,8 @@ export interface BaseBarOptions {
   offsetLeft?: number;
   xRadio: number;
   yRadio: number;
+  stepLengthY: number;
+  stepLengthX: number;
   repaint: (...args: any[]) => void;
 }
 interface Rect {
@@ -132,15 +134,16 @@ export abstract class BaseBar {
         const rightBtnRect = this.getButtonRect("bottomRight");
         const inLeftBtnRect = this.judgeTargetArea(e, leftBtnRect);
         const inRightBtnRect = this.judgeTargetArea(e, rightBtnRect);
-        this.EVENTMAP.scrollBarXOnclickCallBack?
-        this.EVENTMAP.scrollBarXOnclickCallBack(
-          e,
-          inLeftBtnRect,
-          inRightBtnRect,
-          this._options,
-          this.getScrollBarRect(),
-          this.repaint
-        ) : null;
+        if(this.EVENTMAP.scrollBarXOnclickCallBack) {
+          this.EVENTMAP.scrollBarXOnclickCallBack(
+            e,
+            inLeftBtnRect,
+            inRightBtnRect,
+            this._options,
+            this.getScrollBarRect(),
+            this.repaint
+          ) 
+        }
       }
       if(offsetX > width - BaseBar.BTNWIDTH 
         && offsetY < height - safeAreaSize) {
@@ -148,15 +151,16 @@ export abstract class BaseBar {
           const topRightBtnRect = this.getButtonRect("topRight");
           const inRightBottomRect = this.judgeTargetArea(e, rightBottomBtnRect);
           const inTopRightRect = this.judgeTargetArea(e, topRightBtnRect);
-          this.EVENTMAP.scrollBarYOnclickCallBack?
-          this.EVENTMAP.scrollBarYOnclickCallBack(
-            e,
-            inRightBottomRect,
-            inTopRightRect,
-            this._options,
-            this.getScrollBarRect(),
-            this.repaint
-          ): null;
+          if (this.EVENTMAP.scrollBarYOnclickCallBack) {
+            this.EVENTMAP.scrollBarYOnclickCallBack(
+              e,
+              inRightBottomRect,
+              inTopRightRect,
+              this._options,
+              this.getScrollBarRect(),
+              this.repaint
+            )
+          }
       }
     });
     $canvas.on('mousewheel DOMMouseScroll', (e: any)=>{
@@ -165,7 +169,7 @@ export abstract class BaseBar {
       const delta = Math.max(-1, Math.min(1, wheel) );
       const onMousewheelHandelr= this.EVENTMAP.onMousewheel? this.EVENTMAP.onMousewheel: () => false;
       onMousewheelHandelr(
-        this._offsetTop - delta * 10, 
+        this._offsetTop - delta * this._options.stepLengthY, 
         this.getScrollBarRect(),
         this.repaint,
         this.isDouble,
