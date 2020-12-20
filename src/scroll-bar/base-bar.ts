@@ -199,13 +199,9 @@ export abstract class BaseBar {
       const moveScrollBarHandler = (e1: any) => {
         moveScrollBarCallBack(e, rect, this._options, this.repaint, e1);
       };
-
-      $canvas.on("mousemove", moveScrollBarHandler);
-      $canvas.on("mouseleave", (e3: any) => {
-        leaveScrollBarCallBack($canvas, moveScrollBarHandler, e3);
-      });
+      $(document).on("mousemove", moveScrollBarHandler);
       $(document).on("mouseup", (e2: any) => {
-        upScrollBarCallBack($canvas, moveScrollBarHandler, e2);
+        upScrollBarCallBack($(document), moveScrollBarHandler, e2);
       });
     });
   }

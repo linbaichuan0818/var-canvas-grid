@@ -9,7 +9,7 @@ interface Rect {
   h: number;
 }
 export const removeEvent = (
-  $canvas: JQuery,
+  $canvas: JQuery<Element | Document>,
   handler: (...arg: any[]) => void
 ) => {
   $canvas.unbind("mousemove", handler);
@@ -196,7 +196,7 @@ export const leaveScrollBarCallBack = (
 };
 
 export const upScrollBarCallBack = (
-  $target: JQuery,
+  $target: JQuery<Document | Element>,
   handler: (...args: any[]) => any,
   e1: JQuery.MouseLeaveEvent
 ) => {
