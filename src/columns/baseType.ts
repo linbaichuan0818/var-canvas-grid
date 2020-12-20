@@ -8,9 +8,14 @@ interface DefaultOptions{
     padding?: string | number,
     offsetLeft?: number,
     offsetTop?: number
+} 
+interface PaintParams {
+    rowIndex: number,
+    value: string
 }
+type PaintInfo  = BaseCellRect & PaintParams;
 interface BaseCellOptions extends DefaultOptions{
-    index: number;
+    colIndex: number;
     x: number;
     y: number;
     width: number;
@@ -18,10 +23,9 @@ interface BaseCellOptions extends DefaultOptions{
     ctx: CanvasRenderingContext2D;
     displayName:string,
     name:string,
-    row: number,
-    col: number,
     rowCount: number,
-    colCount: number
+    colCount: number,
+    columnValues: string[]
 }
 interface BaseCellRect{
     x: number;
@@ -39,17 +43,19 @@ const DEFAULTOPTIONS: DefaultOptions = {
 }
 const PIXELREG = /(.\dpx)/i;
 export class BaseCellType {
+    public colIndex: number = 0;
     public x: number = 0;
     public y: number = 0;
     public w: number = 0;
     public h: number = 0;
     public displayName: string = "";
     public name: string = "";
-    public row!: number;
-    public col!: number;
     private _offsetLeft: number = 0;
     private _offsetTop: number = 0;
     private _options: BaseCellOptions;
+    private _columnValues: string[];
+    private _rowCount!: number;
+    private _colCount!: number;
 
     constructor(options: BaseCellOptions) {
         this.init(options);
@@ -62,11 +68,8 @@ export class BaseCellType {
     }
 
     public rePaint(options: object){
-        // -> 待优化
-        // this.clearRect();
         this.reInit(options);
-        this.paintContent();
-        this.paintText();
+        this.paint();
     }
 
     private init(options: BaseCellOptions){
@@ -83,17 +86,14 @@ export class BaseCellType {
         this.name  = this._options.name;
         this._offsetLeft = this._options.offsetLeft || 0;
         this._offsetTop = this._options.offsetTop || 0;
-        this.row = this._options.row;
-        this.col = this._options.col;
+        this._colCount = this._options.colCount;
+        this._rowCount = this._options.rowCount;
+        this.colIndex = this._options.colIndex;
+        this._columnValues = this._options.columnValues;
     }
 
-    private clearRect(){
-        const {x, y, w, h, ctx} = this.getCellRect();
-        // 单个cell自行清理上一个区域
-        ctx.clearRect(x, y, w + 1, h + 1);
-    }
-
-    private getCellRect(): BaseCellRect{
+    private getCellRect(paintParams: PaintParams): BaseCellRect{
+        const { rowIndex } = paintParams;
         const { width: w, 
                 height: h, 
                 ctx, 
@@ -101,20 +101,47 @@ export class BaseCellType {
                 y,
                 lineWidth: lw,
                 } = this._options;
-        return {x: x - this._offsetLeft, y:  y - this._offsetTop, w, h, ctx}
+        return {
+            x: x - this._offsetLeft, 
+            y:  y - this._offsetTop + rowIndex * h, 
+            w, 
+            h, 
+            ctx
+        }
     }
 
     private paint(){
-        this.paintContent();
-        this.paintText()
+        let rowIndex = 0;
+        const columnValues = this._columnValues;
+        while (rowIndex < this._rowCount) {
+            const value = columnValues[rowIndex];
+            const paintParams = {
+                rowIndex,
+                value
+            };
+            const cellRect = this.getCellRect(paintParams);
+            const {x , y, ctx} = cellRect;
+            const {clientWidth: cw , clientHeight: ch} = ctx.canvas
+            if(cw < x  || ch < y) {
+                rowIndex ++;
+                continue; 
+            }
+            const paintInfo = {
+                ...paintParams,
+                ...cellRect
+            }
+            this.paintContent(paintInfo);
+            this.paintText(paintInfo);
+            rowIndex ++;
+        }
     }
 
-    private paintText(){
+    private paintText(paintInfo: PaintInfo){
         const { fontSize, padding } = this._options;
-        const cellRect = this.getCellRect();
-        const { x, y, ctx} = this.getAlignPos(cellRect, fontSize);
+        const {value} = paintInfo; 
+        const { x, y, ctx} = this.getAlignPos(paintInfo, fontSize);
         ctx.font = ctx.font.replace(PIXELREG, fontSize + 'px');
-        ctx.fillText(this.displayName, x, y)
+        ctx.fillText(value, x, y)
     }
 
     // only center
@@ -129,18 +156,21 @@ export class BaseCellType {
         }
     }
 
-    private paintContent(){
-        const { x, y, w, h, ctx} = this.getCellRect();
-        const { lineWidth: lw, bgColor: bgc, borderColor: bdgc, col, colCount} = this._options;
+    private paintContent(paintInfo: PaintInfo){
+        const { x, y, w, h, ctx} = paintInfo;
+        const { lineWidth: lw, bgColor: bgc, borderColor: bdgc, colCount} = this._options;
         ctx.beginPath();
-        ctx.lineWidth = lw / 6;
+        ctx.lineWidth = lw / 10;
         ctx.strokeStyle = '#000';
         ctx.moveTo(x,y);
-        ctx.lineTo(x, y + h);
-        ctx.lineTo(x + w, y + h);
-        if(!((col + 1) % colCount)) {
-            ctx.lineTo(x + w, y);
-        }
+        // cell线宽待优化
+        ctx.lineTo(x, y + h); //  left
+        ctx.lineTo(x + w, y + h); // bottom
+        if(this._colCount - this.colIndex  === 1){
+            ctx.lineTo(x + w, y); // right 
+        }       
+        // ctx.lineTo(x, y); // top
+
         ctx.stroke();
     }
 }

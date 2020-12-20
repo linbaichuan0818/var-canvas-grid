@@ -11,7 +11,7 @@
 </body>
 <script>
     const gridOpts = { gridId:'grid-id',
-                       style: "width:500px;height:500px",
+                       style: "width:500px;height:1500px",
                        rowHeight:50,
                        headerRowHeight:100,
                        thCellOptionsList:[
@@ -25,27 +25,21 @@
                                 width: 60, 
                                 height: 50, 
                                 name:"text0",
-                                displayName:"text0"
-                            },
-                            { 
-                                width: 60, 
-                                height: 50, 
-                                name:"no13",
                                 displayName:"No."
                             },
                             { 
                                 width: 60, 
                                 height: 50, 
-                                name:"text2",
+                                name:"text1",
                                 displayName:"text0"
                             }, { 
                                 width: 60, 
                                 height: 50, 
-                                name:"n12321",
+                                name:"text2",
                                 displayName:"No."
                             },
                             { 
-                                width: 605, 
+                                width: 300, 
                                 height: 50, 
                                 name:"text3",
                                 displayName:"text0"
@@ -185,13 +179,13 @@
                            text3:"131",
                        }]
                     }
-        gridOpts.data = new Array(100).fill(0);
+        gridOpts.data = new Array(1000).fill(0);
         gridOpts.data.forEach((item ,index) =>  gridOpts.data[index] = {
                            no: index,
                            text0:"23131",
                            text1:"21321",
                            text2:"1231",
-                           text3:"131",
+                           text3:"13112313",
                        });
    const grid = new VarCanvasGrid(gridOpts);
 </script>

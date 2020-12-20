@@ -15,7 +15,7 @@ export const removeEvent = (
   $canvas.unbind("mousemove", handler);
   $(document).unbind("mouseup", handler);
 };
-
+let scheduledAnimationFrame = false;
 export const moveScrollBarXCallBack = (
   e: JQuery.MouseDownEvent,
   rect: Rect,
@@ -56,8 +56,13 @@ export const onMousewheelY = (
     if (moveY > (1- yRadio) * contentH) {
       moveY = (1- yRadio) * contentH;
     }
-    fn({
-      offsetTop: moveY
+    if(scheduledAnimationFrame) return;
+    scheduledAnimationFrame = true;
+    window.requestAnimationFrame(()=>{
+      fn({
+        offsetTop: moveY
+      });
+      scheduledAnimationFrame = false;
     });
 }
 export const moveScrollBarYCallBack = (
@@ -82,8 +87,13 @@ export const moveScrollBarYCallBack = (
   if (moveY > (1- yRadio) * contentH) {
     moveY = (1- yRadio) * contentH;
   }
-  fn({
-    offsetTop: moveY
+  if(scheduledAnimationFrame) return;
+  scheduledAnimationFrame = true;
+  window.requestAnimationFrame(()=>{
+    fn({
+      offsetTop: moveY
+    });
+    scheduledAnimationFrame = false;
   });
 };
 

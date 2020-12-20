@@ -48,7 +48,7 @@ export abstract class BaseBar {
   public abstract paintScrollBar(): void;
 
   public getScrollBarRect() {
-    let { xRadio, yRadio} = this._options;
+    const { xRadio, yRadio} = this._options;
     const {cw ,ch} = this._options;
     const noSCrollAreaLen: number = this.isDouble ? 3 : 2;
 
@@ -120,11 +120,6 @@ export abstract class BaseBar {
     return xRadio < 1 && yRadio < 1;
   }
 
-  private clearRect() {
-    const { x, y, w, h } = this.getScrollBarRect(); // old rect
-    this.ctx.clearRect(x - 2, y - 2, w + 3, h + 3);
-  }
-
   private init(options: BaseBarOptions) {
     this._options = options;
     const {ctx, ch, offsetTop} = options;
@@ -144,7 +139,7 @@ export abstract class BaseBar {
     const {width, height} = canvas;
     const safeAreaSize = Number(this.isDouble) * BaseBar.BTNWIDTH;
     const $canvas = $(canvas);
-    $canvas.bind("click", (e: any) => {
+    $canvas.bind("mousedown", (e: any) => {
       const { offsetX, offsetY } = e;
       if(offsetY > height - BaseBar.BTNWIDTH 
         && offsetX < width - safeAreaSize) {
@@ -192,14 +187,6 @@ export abstract class BaseBar {
         this.repaint,
         e
         )
-    });
-    $canvas.on("mousemove", (e) => {
-      // const rect = this.getScrollBarRect();
-      // if (this.judgeTargetArea(e, rect)) {
-      //   $canvas.css("cursor", "pointer");
-      // } else {
-      //   $canvas.css("cursor", "default");
-      // }
     });
     $canvas.on("mousedown", (e: any) => {
       const rect = this.getScrollBarRect();

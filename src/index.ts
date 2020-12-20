@@ -4,9 +4,10 @@ import { ScrollBarX } from "./scroll-bar/scroll-bar-x";
 import { ScrollBarY } from "./scroll-bar/scroll-bar-y";
 
 import $ from 'jquery';
-import { flatten, sum } from "./helper/index";
+import { sum } from "./helper/index";
 interface ThCellOptions {
     width: number;
+    height: number,
     displayName: string,
     name: string
 }
@@ -49,7 +50,8 @@ const DEFAULTROWHEIGHT = 30;
 const DEFAULTHEADERROWHEIGHT = 50;
 
 export default class VarCanvasGrid {
-    public tableRows: BaseCellType[][] = [];
+    public headerColumnCellTypes: BaseCellType[] = [];
+    public bodyColumnCellTypes: BaseCellType[] = [];
     public scrollBars: BaseBar[] = []
     public nameToRectMap: {[name: string]: Rect} = {};
     public data: object[] = [];
@@ -71,7 +73,8 @@ export default class VarCanvasGrid {
     }
 
     public reinit(){
-        this.tableRows = [];
+        this.headerColumnCellTypes = [];
+        this.bodyColumnCellTypes = [];
         this.nameToRectMap = {};
         this.colCount = this._options.thCellOptionsList.length;
         this.rowCount = this._options.data.length;
@@ -79,8 +82,8 @@ export default class VarCanvasGrid {
 
     public repaint(options: CellCommon){
         this.cellCommon = Object.assign(this.cellCommon, options);
-        const tableHeaderCells: BaseCellType[] = this.tableRows[0];
-        const tableBodyCells: BaseCellType[] = flatten(this.tableRows.slice(1));
+        const tableHeaderCells: BaseCellType[] = this.headerColumnCellTypes;
+        const tableBodyCells: BaseCellType[] = this.bodyColumnCellTypes;
         const scrollBars = this.scrollBars;
         this.clearRect();
         this.rePaintTableBody(tableBodyCells);
@@ -115,9 +118,7 @@ export default class VarCanvasGrid {
     }
 
     public rePaintScrollBar(scrollBars: BaseBar[]){
-        const gridInfo = this.computeGridInfo();
         const isScrollBarX = (scrollBar: BaseBar) => scrollBar instanceof ScrollBarX;
-        // this.initStepLen();
         const {offsetLeft, offsetTop} = this.cellCommon
         scrollBars.forEach(scrollBar => {
             if(isScrollBarX(scrollBar)){
@@ -163,8 +164,8 @@ export default class VarCanvasGrid {
     private computeGridInfo(): GridInfo{
         const cw = this.ctx.canvas.width;
         const ch = this.ctx.canvas.height;
-        let w = sum(this.tableRows[0].map(headerCol => headerCol.w));
-        let h = sum(this.tableRows.map(bodyRow => bodyRow[0].h)); 
+        let w = sum(this.headerColumnCellTypes.map(headerCol => headerCol.w));
+        let h = this._options.data.length * this._rowHeight + this._headerRowHeight; 
         const restAreaNum = (cw / w < 1) &&  (ch / h < 1) ? 2 : 1;
         // show area hidden by scrollBar
         h += restAreaNum * BaseBar.BTNWIDTH;
@@ -189,7 +190,6 @@ export default class VarCanvasGrid {
     }
 
     private init(options: GridOption){
-        this.tableRows = [];
         this.nameToRectMap = {};
         this.cellCommon = {
             offsetLeft: options.offsetLeft || 0,
@@ -247,83 +247,55 @@ export default class VarCanvasGrid {
     }
 
     private paintTableHeaderRow(cellOptionsList: ThCellOptions []){
-        const nextCellOptions: {x: number, y: number} = {x:0, y:0};
-        const tableRow: BaseCellType[] = [];
-        const {offsetLeft, offsetTop} = this.cellCommon;
-
-        cellOptionsList.forEach((cellOptions, index) => {
-            const extendedCellOptions = Object.assign({}, 
-                                                      cellOptions, 
-                                                      {index, ctx: this.ctx, 
-                                                       height: this._headerRowHeight,
-                                                       offsetLeft,
-                                                       offsetTop,
-                                                       colCount :this.colCount,
-                                                       rowCount: this.rowCount, 
-                                                       row: 0,
-                                                       col: index
-                                                      }, 
-                                                      nextCellOptions);
-            const cell = new BaseCellType(extendedCellOptions);
-            const {x, y, w: width, h: height, name} = cell;
-            this.nameToRectMap[name] = {x, y, width, height};
-            nextCellOptions.x = cell.x + cell.w;
-            nextCellOptions.y = cell.y;
-            tableRow.push(cell)
+        const { thCellOptionsList } = this._options;
+        thCellOptionsList.forEach((thCellOption, colIndex) => {
+            const {displayName, name, width, height} = thCellOption;
+            const lastColumnType = this.headerColumnCellTypes[colIndex - 1];
+            const x =  lastColumnType? lastColumnType.x + lastColumnType.w: 0; 
+            const columnValues =  [displayName];
+            const columnCellType = new BaseCellType({
+                colIndex,
+                x,
+                y: 0,
+                displayName, 
+                name, 
+                width, 
+                height: this._headerRowHeight,
+                columnValues,
+                ctx: this.ctx,
+                rowCount: 1,
+                colCount: this.colCount
+            });
+            this.headerColumnCellTypes.push(columnCellType);
         })
-        this.tableRows.push(tableRow);
     }
 
     private paintTableBodyRow(data: RowData[]){
-        const headerNames: string[] = this.tableRows[0].map(headerRow => headerRow.name); 
-        console.time("耗时->待优化")
-        // 耗时点-> 循环两次，循环内调用方法，new多次对象。
-        data.forEach((row, rowIndex) => {
-           const tableRow: BaseCellType[] = []; 
-           headerNames.forEach( (key, colIndex) => {
-            const extendedCellOptions = this.getBodyCellRect(row, key, rowIndex, colIndex);
-            const cell = new BaseCellType(extendedCellOptions);
-            tableRow.push(cell);
-           })
-           this.tableRows.push(tableRow);
-        })
-        console.timeEnd("耗时->待优化")
-    }
-
-    private getBodyCellRect(row: RowData, key: string, rowIndex: number, colIndex: number){
-        let matchRect = this.nameToRectMap[key];
-        let displayName:string = row[key] !== undefined? row[key]: "";
-        let name:string = row[key] !== undefined? row[key]: "";
-        const {offsetLeft, offsetTop} = this.cellCommon;
-        if(!matchRect) {
-            const {x, y, w: width, h: height}=this.tableRows[0][rowIndex]; // get last row rect
-            matchRect = {x, y, width, height};
-            name = displayName = "";
-        }
-        matchRect.y = this.currentY;
-        matchRect.height = this._rowHeight;
-        return {
-                displayName,
-                name,
-                index: rowIndex, 
+        console.time("首次加载耗时")
+        const { thCellOptionsList } = this._options;
+        thCellOptionsList.forEach((thCellOptions, colIndex) => {
+            const {displayName, name, width, height} = thCellOptions;
+            const lastColumnType = this.bodyColumnCellTypes[colIndex - 1];
+            const x =  lastColumnType? lastColumnType.x + lastColumnType.w: 0; 
+            const columnValues: string[] = this._options.data.map(rowData => rowData[name]);
+            const columnCellType = new BaseCellType({
+                colIndex,
+                x,
+                y: this._headerRowHeight,
+                displayName, 
+                name, 
+                width, 
+                height,
+                columnValues,
                 ctx: this.ctx,
-                offsetLeft,
-                offsetTop,
-                colCount :this.colCount,
-                rowCount: this.rowCount, 
-                row: rowIndex + 1, // header——> 1
-                col: colIndex,
-                ...matchRect
-            };
+                rowCount: this.rowCount,
+                colCount: this.colCount
+            });
+            this.bodyColumnCellTypes.push(columnCellType);
+        })
+        console.timeEnd("首次加载耗时")
     }
-
-    private get currentY(){
-        let currentY: number = 0;
-        currentY = this.tableRows.reduce((pre, cur)=>{
-                                        return cur[0].h + pre
-                                      }, 0);
-        return currentY
-    }
+ 
     private paintTableHeader(){
         const { thCellOptionsList } = this._options;
         this.paintTableHeaderRow(thCellOptionsList)
