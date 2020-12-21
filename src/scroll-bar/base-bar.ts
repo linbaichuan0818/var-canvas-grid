@@ -48,25 +48,36 @@ export abstract class BaseBar {
   public abstract paintScrollBar(): void;
 
   public getScrollBarRect() {
-    const { xRadio, yRadio} = this._options;
+    let { xRadio, yRadio} = this._options;
     const {cw ,ch} = this._options;
     const noSCrollAreaLen: number = this.isDouble ? 3 : 2;
-
     const isX: boolean =  this._options.type === 'x';
+    // 待优化
+    let y =  isX ? this._offsetTop: this._offsetTop + BaseBar.BTNWIDTH;
+    let h = isX ? BaseBar.BTNWIDTH : (ch - BaseBar.BTNWIDTH * noSCrollAreaLen) * yRadio;
+    let x =  isX ? this._offsetLeft + BaseBar.BTNWIDTH: this._offsetLeft;
+    let w =  isX ? (cw - BaseBar.BTNWIDTH * noSCrollAreaLen) * xRadio : BaseBar.BTNWIDTH;
+    if(h < BaseBar.BTNWIDTH) { // 优化数据滚动条太短
+      if(this._offsetTop <= BaseBar.BTNWIDTH){
+        y = BaseBar.BTNWIDTH;
+      }else {
+        y -= BaseBar.BTNWIDTH;
+      }
+      h += BaseBar.BTNWIDTH;
+    }
+    if(x < BaseBar.BTNWIDTH) {
+      if(this._offsetTop >= BaseBar.BTNWIDTH) x -= BaseBar.BTNWIDTH;
+      w += BaseBar.BTNWIDTH;
+    }
     return {
-      x: isX ? this._offsetLeft + BaseBar.BTNWIDTH: this._offsetLeft,
-      y: isX ? this._offsetTop: this._offsetTop + BaseBar.BTNWIDTH,
-      w: isX
-        ? (cw - BaseBar.BTNWIDTH * noSCrollAreaLen) * xRadio
-        : BaseBar.BTNWIDTH,
-      h: isX
-        ? BaseBar.BTNWIDTH
-        : (ch - BaseBar.BTNWIDTH * noSCrollAreaLen) * yRadio,
+      x,
+      y,
+      w,
+      h
     };
   }
 
   public rePaintScrollBar(options: object) {
-    // this.clearRect();
     this.reinit(options);
     this.paintScrollBar();
   }

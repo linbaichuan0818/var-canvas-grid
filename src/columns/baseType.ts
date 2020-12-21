@@ -50,6 +50,9 @@ export class BaseCellType {
     public h: number = 0;
     public displayName: string = "";
     public name: string = "";
+    private _currentStartRow: number = 0;
+    private _currentEndRow: number = 0;
+    private _direction: number = -1; // 1 to ; 0 back; -1 noop
     private _offsetLeft: number = 0;
     private _offsetTop: number = 0;
     private _options: BaseCellOptions;
@@ -59,10 +62,19 @@ export class BaseCellType {
 
     constructor(options: BaseCellOptions) {
         this.init(options);
+        this.initRowPointer();
         this.paint();
     }
 
     public reInit(options: any){
+        const {offsetTop, offsetLeft} = options;
+        if(offsetTop > this._offsetTop || offsetLeft > this._offsetLeft){
+            this._direction = 1;
+        }else if (offsetTop === this._offsetTop ){
+            this._direction = -1;
+        }else {
+            this._direction = 0;
+        }
         this._options = Object.assign({}, this._options, options);
         this.initParams(this._options);
     }
@@ -75,6 +87,11 @@ export class BaseCellType {
     private init(options: BaseCellOptions){
         this._options = Object.assign({}, DEFAULTOPTIONS, options);
         this.initParams(this._options);
+    }
+
+    private initRowPointer() {
+        this._currentEndRow = 0;
+        this._currentEndRow = this._rowCount;
     }
 
     private initParams(options: BaseCellOptions){
@@ -111,29 +128,92 @@ export class BaseCellType {
     }
 
     private paint(){
-        let rowIndex = 0;
         const columnValues = this._columnValues;
-        while (rowIndex < this._rowCount) {
-            const value = columnValues[rowIndex];
-            const paintParams = {
-                rowIndex,
-                value
-            };
-            const cellRect = this.getCellRect(paintParams);
-            const {x , y, ctx} = cellRect;
-            const {clientWidth: cw , clientHeight: ch} = ctx.canvas
-            if(cw < x  || ch < y) {
-                rowIndex ++;
-                continue; 
+        if(this._direction == -1) {
+            let startRow = this._currentStartRow;
+            while (startRow < this._rowCount) {
+                const value = columnValues[startRow];
+                const paintParams = {
+                    rowIndex: startRow,
+                    value
+                };
+                const cellRect = this.getCellRect(paintParams);
+                const {x , y, ctx} = cellRect;
+                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
+                if(y <= 100 && y >= 0){
+                    this._currentStartRow = startRow; 
+                }
+                if(cw <= x  || ch <= y) {
+                    this._currentEndRow = startRow;
+                    break; 
+                }
+                const paintInfo = {
+                    ...paintParams,
+                    ...cellRect
+                }
+                this.paintContent(paintInfo);
+                this.paintText(paintInfo);
+                startRow ++;
             }
-            const paintInfo = {
-                ...paintParams,
-                ...cellRect
-            }
-            this.paintContent(paintInfo);
-            this.paintText(paintInfo);
-            rowIndex ++;
         }
+        let startRow = this._direction? this._currentStartRow: this._currentEndRow;
+        let limit = this._direction? this._rowCount: 0;
+        // console.log(startRow, limit)
+        // console.time('重渲染耗时');
+
+        if(this._direction){
+            while (startRow < limit) {
+                const value = columnValues[startRow];
+                const paintParams = {
+                    rowIndex: startRow,
+                    value
+                };
+                const cellRect = this.getCellRect(paintParams);
+                const {x , y, ctx} = cellRect;
+                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
+                if(cw <= x  || ch <= y) {
+                    this._currentEndRow = startRow;
+                    break; 
+                }
+                if(y <= 100 && y >= 0){
+                    this._currentStartRow = startRow; 
+                }
+                const paintInfo = {
+                    ...paintParams,
+                    ...cellRect
+                }
+                this.paintContent(paintInfo);
+                this.paintText(paintInfo);
+                startRow ++;
+            }
+        }else{
+            while (startRow > limit) {
+                const value = columnValues[startRow];
+                const paintParams = {
+                    rowIndex: startRow,
+                    value
+                };
+                const cellRect = this.getCellRect(paintParams);
+                const {x , y, ctx} = cellRect;
+                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
+                if(y < 0){
+                    this._currentStartRow = startRow; 
+                    break; 
+                }
+                if( x >= cw || y >= ch) {
+                    this._currentEndRow = startRow;
+                }
+                const paintInfo = {
+                    ...paintParams,
+                    ...cellRect
+                }
+                this.paintContent(paintInfo);
+                this.paintText(paintInfo);
+                startRow --;
+            }
+        }
+
+        // console.timeEnd('重渲染耗时')
     }
 
     private paintText(paintInfo: PaintInfo){

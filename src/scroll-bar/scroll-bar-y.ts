@@ -24,6 +24,7 @@ export class ScrollBarY extends BaseBar {
   public paintScrollBar() {
     const { ctx } = this;
     const { x, y, w, h } = this.getScrollBarRect();
+    console.log(y)
     const { width: cw, height: ch } = ctx.canvas;
     const safeArea = BaseBar.BTNWIDTH * (this.isDouble ? 1 : 0);
     ctx.save();
@@ -34,7 +35,7 @@ export class ScrollBarY extends BaseBar {
       ctx.fillRect(cw - w, ch - safeArea, BaseBar.BTNWIDTH, BaseBar.BTNWIDTH);
     }
     ctx.fillStyle = "#A8A8A8";
-    ctx.fillRect(x, y, w, h);
+    ctx.fillRect(x, y, w, h );
     this.paintTopbtn();
     this.paintBottomtbtn();
     ctx.restore();

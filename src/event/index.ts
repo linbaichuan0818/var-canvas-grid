@@ -38,8 +38,13 @@ export const moveScrollBarXCallBack = (
   if (moveX > (1- xRadio) * contentW) {
     moveX = (1- xRadio) * contentW;
   }
-  fn({
-    offsetLeft: moveX
+  if(scheduledAnimationFrame) return;
+  scheduledAnimationFrame = true;
+  window.requestAnimationFrame(()=>{
+    fn({
+      offsetLeft: moveX
+    });
+    scheduledAnimationFrame = false;
   });
 };
 
@@ -72,6 +77,7 @@ export const moveScrollBarYCallBack = (
   fn: (...arg: any[]) => any,
   e1: JQuery.MouseOverEvent
 ) => {
+
   const { 
     yRadio, 
     xRadio,
@@ -80,7 +86,12 @@ export const moveScrollBarYCallBack = (
   } = options;
   const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
   const {y: barOffsetTop } = rect;
-  let moveY = (e1.clientY - e.clientY + barOffsetTop) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum);
+  const mouseOffsetY = e1.clientY - e.clientY;
+  let moveY = (mouseOffsetY + barOffsetTop) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum);
+  if(barOffsetTop <= BaseBar.BTNWIDTH && mouseOffsetY < 0 || 
+    barOffsetTop >= ch - BaseBar.BTNWIDTH && mouseOffsetY > 0) {
+    return false;
+  }
   if (moveY < 0 ) {
     moveY = 0;
   }
@@ -115,13 +126,15 @@ export const scrollBarXOnClickCallBack = (
   const { w: barW, x: barOffsetLeft } = rect;
   let { offsetX: moveX} = e;
   const isBack = moveX > barOffsetLeft;
+  // 待优化
+  const bigData = barW < 2 * BaseBar.BTNWIDTH;  
   const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
   // click gray area
   if(moveX >= barOffsetLeft && moveX <= barOffsetLeft + barW) {
     return false;
   }
 
-  moveX = (moveX - Number(isBack)*barW - BaseBar.BTNWIDTH) *  contentW / (cw - BaseBar.BTNWIDTH * noScrollAreaNum) ;
+  moveX = (moveX - Number(isBack)*barW - Number(!bigData) * BaseBar.BTNWIDTH) *  contentW / (cw - BaseBar.BTNWIDTH * noScrollAreaNum) ;
 
   // click button
   if (inLeftBtnRect) {
@@ -160,6 +173,7 @@ export const scrollBarYOnClickCallBack = (
   const { h: barH, y: barOffsetTop } = rect;
   let { offsetY: moveY} = e;
   const isBack = moveY > barOffsetTop;
+  const bigData = barH < 2 * BaseBar.BTNWIDTH;  
   const noScrollAreaNum = xRadio < 1 && yRadio < 1 ? 3 : 2;
   
   // click gray area
@@ -167,7 +181,7 @@ export const scrollBarYOnClickCallBack = (
     return false;
   }
 
-  moveY = (moveY - Number(isBack) * barH - BaseBar.BTNWIDTH) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum) ;
+  moveY = (moveY - Number(isBack) * barH - Number(!bigData) * BaseBar.BTNWIDTH) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum) ;
   
   // click button
   if (inTopRightRect) {
