@@ -163,6 +163,7 @@ export class BaseCellType {
             if(pos > offsetTop){
                 start = rowIndex;
                 end = start +  oneHzRowCount;
+                end = end > len? len - 1:end;
                 break
             }
             rowIndex ++;
