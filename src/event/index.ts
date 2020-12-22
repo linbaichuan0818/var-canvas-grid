@@ -77,7 +77,6 @@ export const moveScrollBarYCallBack = (
   fn: (...arg: any[]) => any,
   e1: JQuery.MouseOverEvent
 ) => {
-
   const { 
     yRadio, 
     xRadio,
@@ -88,23 +87,20 @@ export const moveScrollBarYCallBack = (
   const {y: barOffsetTop } = rect;
   const mouseOffsetY = e1.clientY - e.clientY;
   let moveY = (mouseOffsetY + barOffsetTop) *  contentH / (ch - BaseBar.BTNWIDTH *noScrollAreaNum);
-  if(barOffsetTop <= BaseBar.BTNWIDTH && mouseOffsetY < 0 || 
-    barOffsetTop >= ch - BaseBar.BTNWIDTH && mouseOffsetY > 0) {
-    return false;
-  }
-  if (moveY < 0 ) {
+
+  if (moveY <= 0 ) {
     moveY = 0;
   }
-  if (moveY > (1- yRadio) * contentH) {
+  if (moveY >= (1- yRadio) * contentH) {
     moveY = (1- yRadio) * contentH;
   }
-  if(scheduledAnimationFrame) return;
-  scheduledAnimationFrame = true;
+  // if(scheduledAnimationFrame) return;
+  // scheduledAnimationFrame = true;
   window.requestAnimationFrame(()=>{
     fn({
       offsetTop: moveY
     });
-    scheduledAnimationFrame = false;
+    // scheduledAnimationFrame = false;
   });
 };
 

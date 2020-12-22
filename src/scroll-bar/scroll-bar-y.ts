@@ -24,7 +24,6 @@ export class ScrollBarY extends BaseBar {
   public paintScrollBar() {
     const { ctx } = this;
     const { x, y, w, h } = this.getScrollBarRect();
-    console.log(y)
     const { width: cw, height: ch } = ctx.canvas;
     const safeArea = BaseBar.BTNWIDTH * (this.isDouble ? 1 : 0);
     ctx.save();

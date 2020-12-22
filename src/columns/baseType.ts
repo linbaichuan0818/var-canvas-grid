@@ -50,31 +50,22 @@ export class BaseCellType {
     public h: number = 0;
     public displayName: string = "";
     public name: string = "";
-    private _currentStartRow: number = 0;
-    private _currentEndRow: number = 0;
-    private _direction: number = -1; // 1 to ; 0 back; -1 noop
+    private _direction: 'x' | 'y' | 'o';
     private _offsetLeft: number = 0;
     private _offsetTop: number = 0;
     private _options: BaseCellOptions;
     private _columnValues: string[];
     private _rowCount!: number;
     private _colCount!: number;
+    private _ctx!: CanvasRenderingContext2D;
 
     constructor(options: BaseCellOptions) {
         this.init(options);
-        this.initRowPointer();
         this.paint();
     }
 
     public reInit(options: any){
-        const {offsetTop, offsetLeft} = options;
-        if(offsetTop > this._offsetTop || offsetLeft > this._offsetLeft){
-            this._direction = 1;
-        }else if (offsetTop === this._offsetTop ){
-            this._direction = -1;
-        }else {
-            this._direction = 0;
-        }
+        this.initDirections(options);
         this._options = Object.assign({}, this._options, options);
         this.initParams(this._options);
     }
@@ -85,13 +76,20 @@ export class BaseCellType {
     }
 
     private init(options: BaseCellOptions){
+        this.initDirections(options);
         this._options = Object.assign({}, DEFAULTOPTIONS, options);
         this.initParams(this._options);
     }
 
-    private initRowPointer() {
-        this._currentEndRow = 0;
-        this._currentEndRow = this._rowCount;
+    private initDirections(newOptions: any) {
+        const {offsetTop, offsetLeft} = newOptions;
+        if(offsetTop > this._offsetTop){
+            this._direction = 'y';
+        }else if (offsetLeft > this._offsetLeft){
+            this._direction = 'x';
+        }else {
+            this._direction = 'o';
+        }
     }
 
     private initParams(options: BaseCellOptions){
@@ -107,6 +105,7 @@ export class BaseCellType {
         this._rowCount = this._options.rowCount;
         this.colIndex = this._options.colIndex;
         this._columnValues = this._options.columnValues;
+        this._ctx = this._options.ctx;
     }
 
     private getCellRect(paintParams: PaintParams): BaseCellRect{
@@ -128,92 +127,47 @@ export class BaseCellType {
     }
 
     private paint(){
-        const columnValues = this._columnValues;
-        if(this._direction == -1) {
-            let startRow = this._currentStartRow;
-            while (startRow < this._rowCount) {
-                const value = columnValues[startRow];
-                const paintParams = {
-                    rowIndex: startRow,
-                    value
-                };
-                const cellRect = this.getCellRect(paintParams);
-                const {x , y, ctx} = cellRect;
-                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
-                if(y <= 100 && y >= 0){
-                    this._currentStartRow = startRow; 
-                }
-                if(cw <= x  || ch <= y) {
-                    this._currentEndRow = startRow;
-                    break; 
-                }
-                const paintInfo = {
-                    ...paintParams,
-                    ...cellRect
-                }
-                this.paintContent(paintInfo);
-                this.paintText(paintInfo);
-                startRow ++;
-            }
+        console.time('重渲染耗时');
+        const {start, end} = this.getRenderArea();
+        let startRow = start;
+        // 待优化，横向范围计算，以及时间复杂度优化
+        while(startRow <= end) {
+            const value = this._columnValues[startRow];
+            const paintParams = {
+                rowIndex: startRow,
+                value
+            };
+            const cellRect = this.getCellRect(paintParams);
+            const paintInfo = {
+                ...paintParams,
+                ...cellRect
+            };
+            this.paintContent(paintInfo);
+            this.paintText(paintInfo);
+            startRow++
         }
-        let startRow = this._direction? this._currentStartRow: this._currentEndRow;
-        let limit = this._direction? this._rowCount: 0;
-        // console.log(startRow, limit)
-        // console.time('重渲染耗时');
+        console.timeEnd('重渲染耗时')
+    }
 
-        if(this._direction){
-            while (startRow < limit) {
-                const value = columnValues[startRow];
-                const paintParams = {
-                    rowIndex: startRow,
-                    value
-                };
-                const cellRect = this.getCellRect(paintParams);
-                const {x , y, ctx} = cellRect;
-                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
-                if(cw <= x  || ch <= y) {
-                    this._currentEndRow = startRow;
-                    break; 
-                }
-                if(y <= 100 && y >= 0){
-                    this._currentStartRow = startRow; 
-                }
-                const paintInfo = {
-                    ...paintParams,
-                    ...cellRect
-                }
-                this.paintContent(paintInfo);
-                this.paintText(paintInfo);
-                startRow ++;
+    private getRenderArea() {
+        const offsetTop = this._offsetTop;
+        const ch = this._ctx.canvas.height;
+        let len = this._columnValues.length;
+        const oneHzRowCount  = !this.y ? 0 : Math.ceil(ch / 50); // 待优化， 判断cell类型
+        let rowIndex = 0;
+        let pos = 0;
+        let start = 0;
+        let end = 0;
+        while(rowIndex < len){
+            pos = 50 * (rowIndex + 1);
+            if(pos > offsetTop){
+                start = rowIndex;
+                end = start +  oneHzRowCount;
+                break
             }
-        }else{
-            while (startRow > limit) {
-                const value = columnValues[startRow];
-                const paintParams = {
-                    rowIndex: startRow,
-                    value
-                };
-                const cellRect = this.getCellRect(paintParams);
-                const {x , y, ctx} = cellRect;
-                const {clientWidth: cw , clientHeight: ch} = ctx.canvas;
-                if(y < 0){
-                    this._currentStartRow = startRow; 
-                    break; 
-                }
-                if( x >= cw || y >= ch) {
-                    this._currentEndRow = startRow;
-                }
-                const paintInfo = {
-                    ...paintParams,
-                    ...cellRect
-                }
-                this.paintContent(paintInfo);
-                this.paintText(paintInfo);
-                startRow --;
-            }
+            rowIndex ++;
         }
-
-        // console.timeEnd('重渲染耗时')
+        return {start, end}
     }
 
     private paintText(paintInfo: PaintInfo){
