@@ -125,7 +125,12 @@ export class BaseCellType {
         $(document).bind('mouseup', (e: JQuery.MouseUpEvent) => {
             if(!this.draging) {return};
             let $line = $('#' + DRAGLINE);
-            this._options.width += dragX; 
+            let newWidth = this._options.width + dragX;
+            if(newWidth < 40){// cell-min-width
+               newWidth = 40;
+               dragX = newWidth - this._options.width;  
+            }
+            this._options.width = newWidth; 
             this._options.sheet.repaint({}, {dragX: dragX / 2, start: this.colIndex})
             $line.hide();
             dragX = 0;
@@ -248,7 +253,7 @@ export class BaseCellType {
         const {ctx, value, w, rowIndex} = paintInfo;
         const ellipsis = '...';
         const ellipsisWidth = ctx.measureText(ellipsis + '.').width;
-        let str = value;
+        let str = String(value);
         let strSubLen = 0;
         while(strSubLen < str.length){
             let strSub = str.substring(0, strSubLen);
