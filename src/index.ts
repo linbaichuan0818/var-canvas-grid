@@ -33,6 +33,7 @@ interface GridInfo{
 interface CellCommon{
     offsetLeft?: number;
     offsetTop?: number;
+    dragX?: number
 }
 
 interface GridOption {
@@ -66,6 +67,7 @@ export default class VarCanvasGrid {
     private stepLengthX!: number;
     private colCount: number;
     private rowCount: number;
+    private gridInfo: GridInfo;
 
     constructor(options: GridOption) {
         this.init(options);
@@ -80,54 +82,90 @@ export default class VarCanvasGrid {
         this.rowCount = this._options.data.length;
     }
 
-    public repaint(options: CellCommon){
+    public repaint(options: CellCommon, dragOptions: any = {}){
         this.cellCommon = Object.assign(this.cellCommon, options);
-        const tableHeaderCells: BaseCellType[] = this.headerColumnCellTypes;
-        const tableBodyCells: BaseCellType[] = this.bodyColumnCellTypes;
-        const scrollBars = this.scrollBars;
+        let tableHeaderCells: BaseCellType[] = this.headerColumnCellTypes;
+        let tableBodyCells: BaseCellType[] = this.bodyColumnCellTypes;
+        let scrollBars = this.scrollBars;
         this.clearRect();
-        this.rePaintTableBody(tableBodyCells);
-        this.rePaintTableHeader(tableHeaderCells);
-        this.rePaintScrollBar(scrollBars);
+        this.rePaintTableBody(tableBodyCells, dragOptions);
+        this.rePaintTableHeader(tableHeaderCells, dragOptions);
+        this.rePaintScrollBar(scrollBars, dragOptions);
         this.paintOutline();
     }
 
-    public rePaintTableHeader(tableHeaderCells: BaseCellType[]) {
+    public rePaintTableHeader(tableHeaderCells: BaseCellType[], dragOptions: any) {
         if(tableHeaderCells) {
+            const { start, dragX} = dragOptions;
             let offset = this.getContentOffset();
             offset = {
                 offsetLeft: offset.offsetLeft,
                 offsetTop: 0
             };
             this.ctx.clearRect(0,0,this.ctx.canvas.width, this._headerRowHeight);
-            tableHeaderCells.forEach(tableHeaderCell => {
+            tableHeaderCells.forEach((tableHeaderCell, colIndex) => {
+                let x = tableHeaderCell.x;
+                x =  colIndex > start? (x + dragX) : x;
                 tableHeaderCell.rePaint(
-                        offset
+                        {
+                            ...offset,
+                            x
+                        }
                     );
             })
         }
     }
 
-    public rePaintTableBody(tableBodyCells: BaseCellType[]){
+    public rePaintTableBody(tableBodyCells: BaseCellType[], dragOptions: any){
         if(tableBodyCells) {
+            const { start, dragX} = dragOptions;
             const offset = this.getContentOffset();
-            tableBodyCells.forEach(tableBodyCell => {
-                tableBodyCell.rePaint(offset);
+            tableBodyCells.forEach((tableBodyCell, colIndex) => {
+                let x = tableBodyCell.x;
+                x = colIndex > start? (x + dragX ): x;
+                tableBodyCell.rePaint({
+                    ...offset,
+                    x
+                });
             })
         }
     }
 
-    public rePaintScrollBar(scrollBars: BaseBar[]){
+    public rePaintScrollBar(scrollBars: BaseBar[], dragOptions: any){
         const isScrollBarX = (scrollBar: BaseBar) => scrollBar instanceof ScrollBarX;
-        const {offsetLeft, offsetTop} = this.cellCommon
+        const { start, dragX} = dragOptions;
+        const {offsetLeft, offsetTop} = this.cellCommon;
+        if(dragX) {
+            this.computeGridInfo();
+            const {yRadio, xRadio} = this.gridInfo;
+            const existXBar = scrollBars.some(isScrollBarX);
+            if(xRadio > 1 && existXBar) {
+                scrollBars.shift().destroy();
+            }else if(xRadio < 1 && !existXBar){
+                scrollBars.unshift( 
+                    new ScrollBarX({ctx: this.ctx, 
+                    ...this.cellCommon,
+                    ...this.gridInfo,
+                    type:'x',
+                    stepLengthY: this.stepLengthY,
+                    stepLengthX: this.stepLengthX,
+                    repaint: this.repaint.bind(this)}));
+            }
+        }
+
         scrollBars.forEach(scrollBar => {
             if(isScrollBarX(scrollBar)){
-                scrollBar.rePaintScrollBar({ offsetLeft })
+                scrollBar.rePaintScrollBar({ offsetLeft, ...this.gridInfo })
             }else{
-                scrollBar.rePaintScrollBar({ offsetTop })
+                scrollBar.rePaintScrollBar({ offsetTop, ...this.gridInfo })
             }
         });
     }
+
+    public getGirdInfo() {
+        return this.gridInfo
+    }
+
     private initStepLen(){
         // 步长待优化
         this.stepLengthY = this._rowHeight;
@@ -140,13 +178,14 @@ export default class VarCanvasGrid {
         const gridContainer = document.getElementById(gridId) || document.body;
         this.$canvas = document.createElement("canvas");
         $(gridContainer).attr("style", style)
-        .append(this.$canvas);
+                        .append(this.$canvas)
+                        .css('position', 'relative')
         const gridContainerWidth = gridContainer.clientWidth;
         const gridContainerHeigth = gridContainer.clientHeight;
 
         $(this.$canvas).attr("id", this._gridId)
             .attr("width", String(gridContainerWidth))
-            .attr("height", String(gridContainerHeigth));
+            .attr("height", String(gridContainerHeigth))
 
         this.ctx = this.$canvas.getContext("2d");
     }
@@ -161,7 +200,7 @@ export default class VarCanvasGrid {
         this.paintOutline();
     }
 
-    private computeGridInfo(): GridInfo{
+    private computeGridInfo(){
         const cw = this.ctx.canvas.width;
         const ch = this.ctx.canvas.height;
         let w = sum(this.headerColumnCellTypes.map(headerCol => headerCol.w));
@@ -172,8 +211,7 @@ export default class VarCanvasGrid {
         w += restAreaNum * BaseBar.BTNWIDTH;
         const xRadio =  cw / w;
         const yRadio = ch / h;
-
-        return {
+        this.gridInfo = {
             xRadio,
             yRadio,
             w,
@@ -210,12 +248,12 @@ export default class VarCanvasGrid {
     }
 
     private paintScrollBar(){
-        const gridInfo = this.computeGridInfo();
-        const { xRadio, yRadio} = gridInfo;
+        this.computeGridInfo();
+        const { xRadio, yRadio} = this.gridInfo;
         if(xRadio < 1) {
             const scrollBar = new ScrollBarX({ctx: this.ctx, 
                                               ...this.cellCommon,
-                                              ...gridInfo,
+                                              ...this.gridInfo,
                                               type:'x',
                                               stepLengthY: this.stepLengthY,
                                               stepLengthX: this.stepLengthX,
@@ -226,7 +264,7 @@ export default class VarCanvasGrid {
         if(yRadio < 1) {
             const scrollBar = new ScrollBarY({ctx: this.ctx, 
                                               ...this.cellCommon,
-                                              ...gridInfo,
+                                              ...this.gridInfo,
                                               type:'y',
                                               stepLengthY: this.stepLengthY,
                                               stepLengthX: this.stepLengthX,
@@ -264,7 +302,8 @@ export default class VarCanvasGrid {
                 columnValues,
                 ctx: this.ctx,
                 rowCount: 1,
-                colCount: this.colCount
+                colCount: this.colCount,
+                sheet: this
             });
             this.headerColumnCellTypes.push(columnCellType);
         })
@@ -289,7 +328,8 @@ export default class VarCanvasGrid {
                 columnValues,
                 ctx: this.ctx,
                 rowCount: this.rowCount,
-                colCount: this.colCount
+                colCount: this.colCount,
+                sheet: this
             });
             this.bodyColumnCellTypes.push(columnCellType);
         })

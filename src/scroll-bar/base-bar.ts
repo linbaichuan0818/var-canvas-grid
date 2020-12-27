@@ -24,6 +24,7 @@ interface Rect {
   h: number;
 }
 type ButtonPosition = "bottomLeft" | "bottomRight" | "rightBottom" | "topRight";
+
 export abstract class BaseBar {
   public static BTNWIDTH: number = 20;
   public abstract EVENTMAP: {
@@ -37,6 +38,7 @@ export abstract class BaseBar {
   private _offsetLeft: number = 0;
   private _offsetTop: number = 0;
   private _options!: BaseBarOptions;
+  private effectHandlerList: Function[] = [];
 
   constructor(options: BaseBarOptions) {
     this.init(options);
@@ -126,6 +128,10 @@ export abstract class BaseBar {
     this._offsetTop = _offsetTop || 0;
   }
 
+  public destroy() {
+    this.effectHandlerList.forEach( effectFn => effectFn());
+  }
+
   public get isDouble() {
     const { xRadio, yRadio } = this._options;
     return xRadio < 1 && yRadio < 1;
@@ -150,7 +156,8 @@ export abstract class BaseBar {
     const {width, height} = canvas;
     const safeAreaSize = Number(this.isDouble) * BaseBar.BTNWIDTH;
     const $canvas = $(canvas);
-    $canvas.bind("mousedown", (e: any) => {
+
+    const clickHandler =  (e: any) => {
       const { offsetX, offsetY } = e;
       if(offsetY > height - BaseBar.BTNWIDTH 
         && offsetX < width - safeAreaSize) {
@@ -186,8 +193,11 @@ export abstract class BaseBar {
             )
           }
       }
-    });
-    $canvas.on('mousewheel DOMMouseScroll', (e: any)=>{
+    }
+
+    this.effectHandlerList.push($canvas.vcbind("mousedown", clickHandler));
+
+    const mousewheelHandler = (e: any)=>{
       e.preventDefault();
       const wheel = e.originalEvent.wheelDelta || -e.originalEvent.detail;
       const delta = Math.max(-1, Math.min(1, wheel) );
@@ -198,8 +208,13 @@ export abstract class BaseBar {
         this.repaint,
         e
         )
-    });
-    $canvas.on("mousedown", (e: any) => {
+      }
+
+   ;
+
+    this.effectHandlerList.push($canvas.vcbind('mousewheel DOMMouseScroll', mousewheelHandler));
+
+    const mousedownHandler =  (e: any) => {
       const rect = this.getScrollBarRect();
       if (!this.judgeTargetArea(e, rect)) {
         return false;
@@ -207,15 +222,22 @@ export abstract class BaseBar {
       const moveScrollBarCallBack = this.EVENTMAP.moveScrollBarCallBack
         ? this.EVENTMAP.moveScrollBarCallBack
         : () => false;
+
       const moveScrollBarHandler = (e1: any) => {
         moveScrollBarCallBack(e, rect, this._options, this.repaint, e1);
       };
-      $(document).on("mousemove", moveScrollBarHandler);
-      $(document).on("mouseup", (e2: any) => {
+
+      const mouseupHandler = (e2: any) => {
         upScrollBarCallBack($(document), moveScrollBarHandler, e2);
-      });
-    });
+      }
+
+      $(document).on("mousemove", moveScrollBarHandler);
+      $(document).on("mouseup", mouseupHandler);
+    }
+
+    this.effectHandlerList.push($canvas.vcbind("mousedown", mousedownHandler));
   }
+
   private getSrollBarOffset(
     scrollDirection: "x" | "y", 
   ) {

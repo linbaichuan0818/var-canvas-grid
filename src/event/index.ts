@@ -8,6 +8,13 @@ interface Rect {
   w: number;
   h: number;
 }
+
+$.fn.extend({
+  vcbind: function(event:string, handler:()=> any){
+      $(this).bind(event, handler);
+      return () => $(this).unbind(event, handler);
+  }
+}) 
 export const removeEvent = (
   $canvas: JQuery<Element | Document>,
   handler: (...arg: any[]) => void
