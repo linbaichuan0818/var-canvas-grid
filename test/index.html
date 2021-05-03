@@ -1,192 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <script src="../dist/index.js"></script>
-</head>
-<body>
-    <div id="grid-id"></div>
-</body>
-<script>
-    const gridOpts = { gridId:'grid-id',
-                       style: "width:500px;height:1500px",
-                       rowHeight:50,
-                       headerRowHeight:100,
-                       thCellOptionsList:[
-                            { 
-                                width: 60, 
-                                height: 50, 
-                                name:"no",
-                                displayName:"No."
-                            },
-                            { 
-                                width: 60, 
-                                height: 50, 
-                                name:"text0",
-                                displayName:"No."
-                            },
-                            { 
-                                width: 60, 
-                                height: 50, 
-                                name:"text1",
-                                displayName:"text0"
-                            }, { 
-                                width: 60, 
-                                height: 50, 
-                                name:"text2",
-                                displayName:"No."
-                            },
-                            { 
-                                width: 300, 
-                                height: 50, 
-                                name:"text3",
-                                displayName:"text0"
-                            },
-                       ],
-                       data:[{
-                           no: 0,
-                           text0:"11",
-                           text1:"11",
-                           text2:"11",
-                           text3:"11",
-                       },{
-                           no: 1,
-                           text0:"111",
-                           text1:"33",
-                           text2:"111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"131",
-                           text1:"1111",
-                           text2:"我感觉不怎么样啊啊啊啊啊啊啊",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"1111",
-                           text1:"1111",
-                           text2:"1111",
-                           text3:"11",
-                       },{
-                           no: 2,
-                           text0:"23131",
-                           text1:"21321",
-                           text2:"1231",
-                           text3:"131",
-                       }]
-                    }
-        gridOpts.data = new Array(1000).fill(0);
-        gridOpts.data.forEach((item ,index) =>  gridOpts.data[index] = {
-                           no: index,
-                           text0:"23131",
-                           text1:"21321",
-                           text2:"1231",
-                           text3:"13112313",
-                       });
-   const grid = new VarCanvasGrid(gridOpts);
-</script>
+  </head>
+  <body>
+    <div id="grid-id" style="height: 700px; width: 1000px"></div>
+  </body>
+  <script>
+    var VarCanvasGrid = window.VarCanvasGrid
+    var i = 1  
+    var rawData = []
+    while(i <= 100){
+      rawData.push( {
+           index:i,
+           text0: "1",
+           text2: "2",
+           text3: "3",
+           text4: "4",
+           text5: "5",
+           text6: "5",
+           text7: "7",
+           text8: "6",
+           text9: "6",
+           text10: "6",
+         })
+         i++;
+    }
+ 
+    window.vargrid= new VarCanvasGrid.VarCanvasTabel({
+      container: "#grid-id",
+      rawData: rawData,
+      headerColumns:[],
+      columns: [
+        new VarCanvasGrid.CustomColumn({
+          name: "index",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text0",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text2",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text3",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text4",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text5",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text6",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text7",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text8",
+        }),
+        new VarCanvasGrid.VarCanvasColumn({
+          name: "text9",
+        }), new VarCanvasGrid.VarCanvasColumn({
+          name: "text10",
+        })
+      ],
+    });
+  </script>
 </html>
