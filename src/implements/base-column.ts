@@ -2,23 +2,30 @@ import {BaseColumnType, Ctx, Positon, Rect} from "@/interface/columns/base-colum
 import { Raw,Record,MergeCellRange } from "@/interface/table/base-table-type"
 import BaseTable from "@/implements/base-table"
 import {cellStyle} from "@/interface/xlsx/style"
-import {DefaultCellStyle, PixlReg, DefaultCellWidth, DefaultCellHeight} from "@/common/data"
+import {TextView, ContentView, CellStyleView} from "@/interface/cell/index"
+
+import {DefaultCellTextView,DefaultCellContentView, PixlReg, DefaultCellWidth, DefaultCellHeight} from "@/common/data"
 import {ctxline} from "@/tools/canvas"
 import BaseRows from './base-rows'
 
 interface BaseColumnOptions { //不需要用户传入
     width?:number
+    displayname?: string | number 
     name: string | number // 唯一id
 }
-export type CellInfo = Ctx & cellStyle & {value: Raw[keyof Raw]} & MergeCellRange
-export type TextCtx =   Ctx & cellStyle & {value: Raw[keyof Raw]}
-export type ContentCtx =  Ctx & cellStyle
+export type CellIndex = {col:number, row:number}
+export type CellInfo = Ctx & CellStyleView & {value: Raw[keyof Raw]} & MergeCellRange & CellIndex
+export type TextCtx =   Ctx & TextView & {value: Raw[keyof Raw]} & MergeCellRange & CellIndex
+export type ContentCtx =  Ctx & ContentView & MergeCellRange & CellIndex
 
-let firstRowOffset = 0;
-
+let maxoff = 0;
+/**
+ * TODO：优化公共逻辑代码。形象化类型
+ */
 export default class BaseColumn implements BaseColumnType{
     index!:number;
     name!:string | number;
+    displayname?:string | number;
     table!:BaseTable;
     width!:number;
     colData:CellInfo[] = []; // 收集列数据
@@ -28,8 +35,9 @@ export default class BaseColumn implements BaseColumnType{
         options&&this.init(options)
     }
     init(options: BaseColumnOptions){
-        const {width, name} = options
+        const {width, name, displayname} = options
         this.name = name
+        this.displayname = displayname
         this.width = width ||　DefaultCellWidth
     }
 
@@ -52,21 +60,19 @@ export default class BaseColumn implements BaseColumnType{
                 i++; 
                 continue
             }
-            if(i%2) context.h = 100
-            if(i%3) context.h = 300
-            if(i%5) context.h = 200
-
-
-            context = this.paintContent({...context, ...DefaultCellStyle, value})
+            context = this.paintContent({...context, ...DefaultCellContentView, value, col: this.index ,row: i-1})
             context= this.paintText({
                 ...context,
-                ...DefaultCellStyle,
-                value
+                ...DefaultCellTextView,
+                value,
+                col: this.index ,row: i-1
             }) 
             const cellInfo:CellInfo = {
                 value,
-                ...DefaultCellStyle,
+                ...DefaultCellContentView,
+                ...DefaultCellTextView,
                 ...context,
+                col: this.index ,row: i-1
             }
             this.colData.push(cellInfo)
             context = this.nextCtx(context) 
@@ -82,46 +88,58 @@ export default class BaseColumn implements BaseColumnType{
         let  rowIndex =  0
         const { ctx} = this.table;
         const {x, y} = offset
-        let isFirstRow = true; // need 
-        if(this.index === 0){ // repaint table reset
-            this.rows.firstRowOffset = 0;
-        }
         while(rowIndex< this.colData.length){
             const MAXY = ctx.canvas.height 
             const MINY = 0
             const cell = this.colData[rowIndex]
-            const cellContext = {...cell, x: cell.x+x,y:cell.y+y + this.rows.firstRowOffset}
-            if((cellContext.y  < MINY && (cellContext.y + (cellContext.mh || cellContext.h) < MINY)) || cellContext.y > MAXY){ // 只渲染可视区内cell
+            const cellContext:CellInfo = {...cell, x: cell.x+x,y:cell.y+y + this.rows.firstRowOffset}
+            this.checkMerge(cellContext)
+            const {y:celly, h:cellh} = cellContext
+            // 只渲染可视区内cell
+            if((celly  < MINY && (celly + cellh < MINY)) || celly > MAXY || cellContext.h === 0){ 
                 rowIndex++; 
                 continue
             }
-            isFirstRow && this.rows.firstRowControlFn(cellContext, offset) 
             this.paintContent(cellContext)
             this.paintText(cellContext)
-            isFirstRow = false
             rowIndex++
         }
-        // next col paint reset
-        // keep firstRowOffset  onPainted.
-        if(this.index < this.rows.cols.length - 1){
-            this.rows.firstRowOffset = 0;
+    }
+    checkMerge(cellContext:CellInfo){
+        const {h, mh, mw, spanType} =cellContext
+        if(spanType){
+            cellContext.h = mh
+            cellContext.w = mw
         }
     }
-    paintContent<T extends CellInfo>(args: T, noPaint = false):any{
-        if(noPaint) return args
-        let { x, y, w, h, ctx, border, spanType} = args;
+    paintContent<T extends ContentCtx>(args: T, noPaint = false):any{
+        if(noPaint) return args;
+        let { x, y, w, h,ctx,bgcolor, spanType, leftColor,
+             rightColor, topColor, bottomColor,
+            topWidth, leftWidth, rightWidth, bottomWidth
+            } = args;
+        const showCell =  (!spanType || spanType.includes('lt')) // 合并cell以第一个为准
+
+        if(showCell){
         // cell线宽待优化
-        (!spanType || spanType.includes('l')) && ctxline(ctx,x,y,x, y + h); // left
-        (!spanType || spanType.includes('b')) && ctxline(ctx,x, y + h, x + w, y + h); // bottom
-        (!spanType || spanType.includes('r')) && ctxline(ctx,x + w, y + h,x + w, y); //  right
-        (!spanType || spanType.includes('t')) && ctxline(ctx,x + w, y,x, y); // top
+            ctx.save()
+            ctx.fillStyle = bgcolor
+            ctx.fillRect(x,y,w,h)
+            ctx.restore()
+            ctxline(ctx,x,y,x, y + h, leftColor, leftWidth); // left
+            ctxline(ctx,x, y + h, x + w, y + h, bottomColor, bottomWidth); // bottom
+            ctxline(ctx,x + w, y + h,x + w, y, rightColor, rightWidth); //  right
+            ctxline(ctx,x + w, y,x, y, topColor, topWidth); // top
+        }
         this.width = w;
         return {x,y,w,h,ctx}
     }
-    paintText<T extends CellInfo>(args:T, noPaint = false){
+    paintText<T extends TextCtx>(args:T, noPaint = false){
         if(noPaint) return args
-        let { font:{sz}, w,ctx, value,h,x,y, spanType, mh,mw } = args;
+        let { sz, w,ctx, value,h,x,y, spanType, fontColor } = args;
+        value = value ===undefined? '':value
         if(!spanType || spanType === 'lt'){
+            ctx.fillStyle = fontColor
             ctx.font = ctx.font.replace(PixlReg, sz + 'px');
             const { x:fontX, y:fontY} = this.getAlignPos(args);
             ctx.fillText(value, fontX, fontY)
@@ -143,21 +161,20 @@ export default class BaseColumn implements BaseColumnType{
             let i = start;
             let context:Ctx = {y,x:x+index*width, w:width ,h:DefaultCellHeight, ctx}// 暂假设列宽相同
             while(i < end){
-                const value = rawData[i][this.name]
-                if(i%2) context.h = 100
-                if(i%3) context.h = 300
-                if(i%5) context.h = 200
-
-                context = this.paintContent({...context, ...DefaultCellStyle, value}, true)
+                const value = rawData[i][this.name] 
+                context = this.paintContent({...context, ...DefaultCellContentView, value,col: this.index ,row: i}, true)
                 context= this.paintText({
                     ...context,
-                    ...DefaultCellStyle,
-                    value
+                    ...DefaultCellTextView,
+                    value,
+                    col: this.index ,row: i-1
                 }, true) 
                 const cellInfo:CellInfo = {
                     value,
-                    ...DefaultCellStyle,
+                    ...DefaultCellContentView,
+                    ...DefaultCellTextView,
                     ...context,
+                    col: this.index ,row: i-1
                 }
                 colData.push(cellInfo) // 可视区列数据
                 context = this.nextCtx(context) 
@@ -168,25 +185,16 @@ export default class BaseColumn implements BaseColumnType{
         }
     }
 
-    keepInOneLine(args:Ctx, offset: Positon){
-        const {y: ty} = offset
-        const {y: ry} = args
-        const {tableHeader} = this.table
-        if( ty !==0 && ry < tableHeader.height){ // 保证滚动body第一行单元格展示完全
-            firstRowOffset =  tableHeader.height - args.y;
-            args.y = tableHeader.height
-        }
-    }
+    
     nextCtx(args:Ctx):Ctx{
         let {y, h, w} = args
         return {...args,w: this.width, h: DefaultCellHeight,y:y+h} // 只传递位置因子
     }
-    getAlignPos<T extends CellInfo>(args: T):{x:number, y:number}{
-        let {x, y, w, h, value, ctx, font:{sz}, spanType, mw, mh} = args;
+    getAlignPos<T extends TextCtx>(args: T):{x:number, y:number}{
+        let {x, y, w, h, value, ctx, sz, spanType, mw, mh} = args;
         if(!!spanType){ // 使用合并高度绘制文字
             w = mw
             h = mh
-            console.log(w, h)
         }
         const textWidth = ctx.measureText(value).width;
         return {

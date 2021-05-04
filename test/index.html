@@ -7,65 +7,151 @@
     <script src="../dist/index.js"></script>
   </head>
   <body>
-    <div id="grid-id" style="height: 700px; width: 1000px"></div>
+    <div id="grid-id" style="height: 600px; width: 600px"></div>
   </body>
   <script>
     var VarCanvasGrid = window.VarCanvasGrid
     var i = 1  
-    var rawData = []
-    while(i <= 100){
-      rawData.push( {
-           index:i,
-           text0: "1",
-           text2: "2",
-           text3: "3",
-           text4: "4",
-           text5: "5",
-           text6: "5",
-           text7: "7",
-           text8: "6",
-           text9: "6",
-           text10: "6",
-         })
-         i++;
-    }
- 
+    var rawData = [
+      {
+        A:'周一至周五',
+      },
+      {
+        A:'',
+        B:'',									
+        C:'项目',
+      },{
+        A:'时间段',
+        B:'6:30 - 7:30',	
+        C:'晨读',
+      },
+      {
+        B:'7:30 - 8:30'	
+        ,	
+        C:'人民网、光明日报，锐评、热评',								
+      },
+      {
+        B:'19:00 - 22:00'			
+        ,	
+        C:'视频、练习',						
+      },
+      {
+        B:'22:00 - 22:30'		
+        ,	
+        C:'洗澡',							
+      },{
+        B:'22:30 - 23:00'		
+        ,	
+        C:'放松一下',							
+      },{
+        B :'23:00 - 6:00'
+        ,	
+        C:'休息',									
+      },{},
+      {
+        A:'周六至周日',
+      },
+      {
+        A:'',
+        B:'',									
+        C:'项目',
+        D:'项目',
+        E:'项目',
+        F:'项目',
+        G:'项目',
+        H:'项目',
+        I:'项目',
+        J:'项目',												
+      },
+      {
+        A:'时间段',
+        B:'6:30 - 7:30',	
+        C:'洗漱',
+      },
+      {
+        B:'6:30 - 7:30',	
+        C:'晨读',
+      },
+      {
+        B:'7:30 - 8:30'	
+        ,	
+        C:'人民网、光明日报，锐评、热评',								
+      },
+      {
+        B:'19:00 - 22:00'			
+        ,	
+        C:'视频、练习',						
+      },
+      {
+        B:'22:00 - 22:30'		
+        ,	
+        C:'洗澡',							
+      },{
+        B:'22:30 - 23:00'		
+        ,	
+        C:'放松一下',							
+      }
+      // ,{
+      //   B :'23:00 - 6:00'
+      //   ,	
+      //   C:'休息',									
+      // },
+    ]
+    function mergeFn(table, top, left, fn){
+      top = top || 0
+      left = left || 0
+        table.tableHeader.mergeCell({row:top,col:left,spanCol:10,spanRow:1})
+        table.tableBody.mergeCell({row:top,col:left,spanCol:10,spanRow:1})
+        var i = 7 
+        while(i>1){
+          table.tableBody.mergeCell({row:i+top,col:2+left,spanCol:8,spanRow:1})
+          i--
+        }
+        table.tableBody.mergeCell({row:1+top,col:2+left,spanCol:8,spanRow:1})
+        table.tableBody.mergeCell({row:2+top,col:left,spanCol:1,spanRow:6})
+        fn && fn()
+      }
     window.vargrid= new VarCanvasGrid.VarCanvasTabel({
       container: "#grid-id",
       rawData: rawData,
       headerColumns:[],
+      onPainted:function(table){
+        mergeFn(table)
+        mergeFn(table,9,0)
+        table.tableBody.mergeCell({row:8,col:0,spanCol:9,spanRow:1})
+      },
+      headerRowsCount:0,
       columns: [
         new VarCanvasGrid.CustomColumn({
-          name: "index",
+          name: "A",
+          displayname:"计划表"
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text0",
+          name: "B",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text2",
+          name: "C",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text3",
+          name: "D",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text4",
+          name: "E",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text5",
+          name: "F",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text6",
+          name: "G",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text7",
+          name: "H",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text8",
+          name: "I",
         }),
         new VarCanvasGrid.VarCanvasColumn({
-          name: "text9",
-        }), new VarCanvasGrid.VarCanvasColumn({
-          name: "text10",
+          name: "J",
         })
       ],
     });

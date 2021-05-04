@@ -1,8 +1,9 @@
 import {cellStyle} from "@/interface/xlsx/style"
+import {ContentView,TextView} from "@/interface/cell/index"
 export const PixlReg = /(.\dpx)/i;
 export const DefaultCellWidth = 100 
 export const DefaultCellHeight = 20 
-export const DefaultCellStyle:cellStyle = {
+export const DefaultCellStyleXlsx:cellStyle = {
     font: {
         name:'Calibri',
         sz: 11,
@@ -23,7 +24,7 @@ export const DefaultCellStyle:cellStyle = {
         textRotation:  0 // 0-180-255
     },
     fill:{
-        bgcolor: {rgb:"#000000"},
+        bgcolor: {rgb:"#FFFFFF"},
         fgColor: {rgb:"#000000"},
         patternType: "solid"
     },
@@ -52,4 +53,23 @@ export const DefaultCellStyle:cellStyle = {
         diagonalDown: false,
     },
     numFmt:'0'
+}
+export const DefaultCellContentView:ContentView = {
+    bgcolor:"#ffffff",
+    bottomColor: "#000000",
+    leftColor: "#000000",
+    rightColor: "#000000",
+    topColor:"#000000",
+    topWidth: 2,
+    rightWidth: 2,
+    bottomWidth: 2,
+    leftWidth: 2
+}
+export const DefaultCellTextView:TextView = {
+    sz:11,
+    fontColor: "#000000"
+}
+export const DefaultCellStyleView = {
+    ...DefaultCellContentView,
+    ...DefaultCellTextView
 }

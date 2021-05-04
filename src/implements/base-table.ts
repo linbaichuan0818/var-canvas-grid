@@ -15,7 +15,8 @@ interface BaseRowOptions {
     rawData: Raw[],
     columns: BaseColumn[],
     headerColumns?: BaseColumn[],
-    headerRowsCount?: number
+    headerRowsCount?: number,
+    onPainted?:()=>void
 }
 let scheduledAnimationFrame = false;
 
@@ -30,6 +31,7 @@ export default class BaseTable implements BaseTableType{
     setSize:SetSizeFn;
     size:Size; // 占位容器size
     fistPaintSize:Size
+    onPainted!: (table?: BaseTable)=> void
     offset: Positon = {
         x: 0,
         y: 0
@@ -79,13 +81,13 @@ export default class BaseTable implements BaseTableType{
         this.paint(true)
     }
     init(options: BaseRowOptions): void {
-        const { rawData, container, columns, headerColumns, headerRowsCount } = options
+        const { rawData, container, columns, headerColumns, headerRowsCount, onPainted } = options
         const headerOriginal = headerColumns && headerColumns.length? headerColumns : columns
         const titleRaw:Record = {}
-        headerOriginal.map(({name})=>titleRaw[name] = name)
+        headerOriginal.map(({name, displayname})=>titleRaw[name] = displayname || name)
         rawData.unshift(titleRaw)
         this.rawData = rawData
-
+        this.onPainted = onPainted
         this.gridId = 'grid-' + Date.now()
         this.container = container
         this.headerRowsCount = headerRowsCount || 1
@@ -99,6 +101,9 @@ export default class BaseTable implements BaseTableType{
                 this.tableBody.cols.forEach(col=>col.colDataFn())
                 this.setSize(this.tableBody.width, this.tableBody.height)
                 this.fistPaintSize = {...this.size}
+                setTimeout(()=>{
+                    this.onPainted && this.onPainted(this)
+                })
             }
         })
         this.tableHeader = new BaseTableHeader({

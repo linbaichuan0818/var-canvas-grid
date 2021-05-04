@@ -4,14 +4,11 @@ import { Record, Raw } from "@/interface/table/base-table-type"
 import BaseColumn, {CellInfo} from './base-column'
 import BaseTable from './base-table'
 
-const mergeRange = {
-    spanCol:2,
-    spanRow:2,
-}
 interface BaseRowsOptions{
     rowsRange?: [number, number]
     onPainted?:()=>void
 }
+
 export default abstract class BaseRows implements BaseRowType{
     height!:number
     width!:number
@@ -19,7 +16,7 @@ export default abstract class BaseRows implements BaseRowType{
     cols: BaseColumn[] = []
     table!: BaseTable
     rowsRange!:[number, number]
-    rowData:Record<CellInfo[]> = {} // 搜集行数据
+    rowData:Array<CellInfo[]> = [] // 搜集行数据
     onPainted:()=>void = ()=> undefined
     constructor(options: BaseRowsOptions){
         this.init(options)
@@ -47,7 +44,7 @@ export default abstract class BaseRows implements BaseRowType{
     }
     paint(offset:Positon = {x:0, y:0}): void {
         this.clearRect(0,0, this.width, this.height)
-        this.rowData = {};
+        this.rowData = [];
         this.cols.forEach(col=>col.colData = [])
         this.cols.forEach((col)=>{
            col.paint({...offset})
@@ -74,22 +71,19 @@ export default abstract class BaseRows implements BaseRowType{
         // 2,2,3,3
         // (2,2) => (4,,4)
         let illegal = false;
-        const rangeCells = Object.values(this.rowData) // rowdata 可以写成 [][]
+        const rangeCells = this.rowData// rowdata 可以写成 [][]
         .slice(col, spanCol + col)
         .reduce((pre,cur)=>{
             return pre = pre.concat(cur.slice(row, spanRow+row))
         },[])
-        
         const haslt = rangeCells.some(cell=>cell.spanType ==='lt')
         const hasrt = rangeCells.some(cell=>cell.spanType === 'rt')
         const hasrb = rangeCells.some(cell=>cell.spanType === 'rb')
         const haslb = rangeCells.some(cell=>cell.spanType === 'lb')
         const nomerged = rangeCells.every(cell => !cell.spanType)
-        if(!(nomerged || (haslt && hasrb && hasrt && haslb))){ // 判断有问题
-            console.log(nomerged, haslt, hasrb,hasrt,haslb )
+        if(!(nomerged || (haslt && hasrb && hasrt && haslb))){ // 非法合并
             return illegal = true
         }
-    
 
         let i = spanCol
         while(i){
@@ -100,20 +94,20 @@ export default abstract class BaseRows implements BaseRowType{
                 const _spanCol = i + 1
                 const _spanRow = index + 1
                 cell.mw = cell.mh = 0
-                if(_spanCol == spanCol && _spanRow ==1){ // rt
+                if(_spanCol == spanCol-1 && _spanRow ==1){ // rt
                     cell.spanType ='rt'
                     cell.mh = mergeRows[spanRow-1].y + mergeRows[spanRow-1].h - mergeRows[0].y
-                    cell.mw = this.rowData[spanCol+col][0].x - this.rowData[col][0].x
+                    cell.mw = this.rowData[spanCol-1+col][0].x + this.rowData[spanCol-1+col][0].w - this.rowData[col][0].x 
                 }
                 else if(_spanRow == 1 && _spanCol==1 ){
                     cell.spanType ='lt'
                     cell.mh = mergeRows[spanRow-1].y + mergeRows[spanRow-1].h - mergeRows[0].y
-                    cell.mw = this.rowData[spanCol+col][0].x - this.rowData[col][0].x
+                    cell.mw = this.rowData[spanCol-1+col][0].x + this.rowData[spanCol-1+col][0].w - this.rowData[col][0].x
                 }
                 else if(_spanRow === spanRow && _spanCol==1){
                     cell.spanType ='lb'
                 }
-                else if(_spanRow === spanRow && _spanCol==spanCol){
+                else if(_spanRow === spanRow && _spanCol==spanCol-1){
                     cell.spanType ='rb'
                 }
                 else if(_spanCol == spanCol){
@@ -122,7 +116,7 @@ export default abstract class BaseRows implements BaseRowType{
                 else if(_spanRow == 1){
                     cell.spanType = 't'
                     cell.mh = mergeRows[spanRow-1].y + mergeRows[spanRow-1].h - mergeRows[0].y
-                    cell.mw = this.rowData[spanCol+col][0].x - this.rowData[col][0].x
+                    cell.mw = this.rowData[spanCol-1+col][0].x + this.rowData[spanCol-1+col][0].w - this.rowData[col][0].x
                 }
                 else if(_spanCol == 1){
                     cell.spanType = 'l'
